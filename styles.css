@@ -202,3 +202,81 @@ html, body {
     100% { background-color: transparent; }
 }
 
+
+/* Holographic Flicker */
+@keyframes holo-flicker {
+    0% { opacity: 0.8; transform: skewX(0deg); }
+    5% { opacity: 0.4; transform: skewX(2deg); }
+    10% { opacity: 0.8; transform: skewX(0deg); }
+    15% { opacity: 0.9; transform: skewX(-1deg); }
+    100% { opacity: 1; transform: skewX(0deg); }
+}
+
+.holo-card {
+    position: relative;
+    overflow: hidden;
+}
+
+.holo-card::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: linear-gradient(
+        45deg,
+        transparent 0%,
+        rgba(0, 240, 255, 0.05) 30%,
+        rgba(0, 240, 255, 0.1) 50%,
+        rgba(0, 240, 255, 0.05) 70%,
+        transparent 100%
+    );
+    transform: rotate(45deg);
+    animation: holo-sweep 10s linear infinite;
+    pointer-events: none;
+}
+
+@keyframes holo-sweep {
+    0% { transform: translate(-50%, -50%) rotate(0deg); }
+    100% { transform: translate(-50%, -50%) rotate(360deg); }
+}
+
+/* Advanced Glassmorphism */
+.glass-panel-heavy {
+    background: rgba(10, 15, 26, 0.7);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.8);
+}
+
+.neon-text-pulse {
+    animation: neon-pulse 1.5s ease-in-out infinite alternate;
+}
+
+@keyframes neon-pulse {
+    from { text-shadow: 0 0 5px #00F0FF, 0 0 10px #00F0FF; }
+    to { text-shadow: 0 0 10px #00F0FF, 0 0 20px #00F0FF, 0 0 30px #00F0FF; }
+}
+
+/* Matrix Text Effect */
+.matrix-fade {
+    animation: matrix-fade 0.5s ease-in;
+}
+
+@keyframes matrix-fade {
+    from { opacity: 0; filter: blur(10px); }
+    to { opacity: 1; filter: blur(0px); }
+}
+
+/* Scanning Overlay */
+.scanline-overlay {
+    background: linear-gradient(
+        to bottom,
+        rgba(18, 16, 16, 0) 50%,
+        rgba(0, 0, 0, 0.1) 50%
+    );
+    background-size: 100% 4px;
+    z-index: 100;
+    pointer-events: none;
+}

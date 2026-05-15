@@ -470,38 +470,65 @@ const DeploymentPage = ({ onComplete }) => {
 // --- Command Center Components ---
 
 const ThreatFeed = ({ threats, onMitigate }) => {
+    const [decryptedIds, setDecryptedIds] = useState(new Set());
+
+    useEffect(() => {
+        const latest = threats[0];
+        if (latest && !decryptedIds.has(latest.id)) {
+            const timer = setTimeout(() => {
+                setDecryptedIds(prev => new Set(prev).add(latest.id));
+            }, 800);
+            return () => clearTimeout(timer);
+        }
+    }, [threats, decryptedIds]);
+
     return (
-        <div className="glass-panel p-4 rounded-lg border border-white/10 h-full flex flex-col">
-            <div className="flex justify-between items-center mb-4 border-b border-white/10 pb-2">
+        <div className="glass-panel p-4 rounded-lg border border-white/10 h-full flex flex-col relative overflow-hidden">
+            <div className="absolute inset-0 scanline-overlay opacity-5 pointer-events-none"></div>
+            <div className="flex justify-between items-center mb-4 border-b border-white/10 pb-2 relative z-10">
                 <span className="text-xs font-orbitron text-brand-accent tracking-widest">LIVE THREAT FEED</span>
                 <span className="w-2 h-2 rounded-full bg-brand-emerald animate-pulse"></span>
             </div>
-            <div className="flex-1 overflow-y-auto space-y-3 custom-scrollbar">
+            <div className="flex-1 overflow-y-auto space-y-3 custom-scrollbar relative z-10">
                 <AnimatePresence>
-                    {threats.map((t) => (
-                        <motion.div 
-                            key={t.id}
-                            initial={{ opacity: 0, x: -20 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            exit={{ opacity: 0, scale: 0.95 }}
-                            className={`text-[10px] md:text-xs font-mono p-2 bg-white/5 border-l-2 ${t.type === 'CRITICAL' ? 'border-red-500' : 'border-brand-accent/30'} flex flex-col gap-1 relative group hover:bg-white/10 transition-colors`}
-                        >
-                            <div className="flex justify-between">
-                                <span className={t.type === 'CRITICAL' ? 'text-red-500 glitch-text' : t.type === 'WARNING' ? 'text-yellow-500' : 'text-brand-emerald'}>[{t.type}]</span>
-                                <span className="text-gray-500">{t.location}</span>
-                            </div>
-                            <div className="text-white truncate">{t.action}</div>
-                            <div className="flex justify-between items-center mt-1">
-                                <div className="text-brand-accent/60 opacity-0 group-hover:opacity-100 transition-opacity">SRC: {t.origin}</div>
-                                <button 
-                                    onClick={() => onMitigate(t.id)}
-                                    className="text-[8px] px-2 py-0.5 border border-brand-accent/30 text-brand-accent hover:bg-brand-accent hover:text-black transition-all opacity-0 group-hover:opacity-100"
-                                >
-                                    MITIGATE
-                                </button>
-                            </div>
-                        </motion.div>
-                    ))}
+                    {threats.map((t) => {
+                        const isDecrypted = decryptedIds.has(t.id);
+                        return (
+                            <motion.div 
+                                key={t.id}
+                                initial={{ opacity: 0, x: -20, filter: 'blur(5px)' }}
+                                animate={{ opacity: 1, x: 0, filter: 'blur(0px)' }}
+                                exit={{ opacity: 0, scale: 0.95, filter: 'blur(10px)' }}
+                                className={`text-[10px] md:text-xs font-mono p-3 bg-white/5 border-l-2 ${t.type === 'CRITICAL' ? 'border-red-500 bg-red-500/5' : 'border-brand-accent/30'} flex flex-col gap-1 relative group hover:bg-white/10 transition-all duration-300 rounded-r`}
+                            >
+                                <div className="flex justify-between">
+                                    <span className={t.type === 'CRITICAL' ? 'text-red-500 glitch-text' : t.type === 'WARNING' ? 'text-yellow-500' : 'text-brand-emerald'}>
+                                        [{t.type}]
+                                    </span>
+                                    <span className="text-gray-500 text-[8px] uppercase tracking-tighter">{t.location}</span>
+                                </div>
+                                <div className="text-white truncate font-bold">
+                                    {isDecrypted ? t.action : (
+                                        <span className="opacity-40 tracking-widest">
+                                            {t.action.replace(/[a-zA-Z]/g, () => Math.random() > 0.5 ? '0' : '1')}
+                                        </span>
+                                    )}
+                                </div>
+                                <div className="flex justify-between items-center mt-2">
+                                    <div className="text-[8px] text-brand-accent/40 group-hover:text-brand-accent/70 transition-colors">UPLINK: {t.origin}</div>
+                                    <button 
+                                        onClick={() => onMitigate(t.id)}
+                                        className="text-[8px] px-3 py-1 border border-brand-accent/30 text-brand-accent hover:bg-brand-accent hover:text-black transition-all opacity-0 group-hover:opacity-100 uppercase tracking-widest font-bold"
+                                    >
+                                        MITIGATE
+                                    </button>
+                                </div>
+                                {t.type === 'CRITICAL' && !isDecrypted && (
+                                    <div className="absolute inset-0 bg-red-500/10 animate-pulse pointer-events-none"></div>
+                                )}
+                            </motion.div>
+                        );
+                    })}
                 </AnimatePresence>
             </div>
         </div>
@@ -552,6 +579,36 @@ const CommandGlobe = ({ threats }) => {
         const points = new THREE.Points(pointsGeometry, pointsMaterial);
         globeGroup.add(points);
 
+        // Add City Hotspots
+        const createHotspot = (lat, lng, name) => {
+            const phi = (90 - lat) * (Math.PI / 180);
+            const theta = (lng + 180) * (Math.PI / 180);
+            const r = 2.02;
+            
+            const hotspotGeom = new THREE.SphereGeometry(0.04, 8, 8);
+            const hotspotMat = new THREE.MeshBasicMaterial({ color: '#00F0FF' });
+            const hotspot = new THREE.Mesh(hotspotGeom, hotspotMat);
+            
+            hotspot.position.set(
+                r * Math.sin(phi) * Math.cos(theta),
+                r * Math.cos(phi),
+                r * Math.sin(phi) * Math.sin(theta)
+            );
+            globeGroup.add(hotspot);
+
+            // Pulse effect for hotspot
+            const ringGeom = new THREE.RingGeometry(0.05, 0.08, 16);
+            const ringMat = new THREE.MeshBasicMaterial({ color: '#00F0FF', transparent: true, side: THREE.DoubleSide });
+            const ring = new THREE.Mesh(ringGeom, ringMat);
+            ring.position.copy(hotspot.position);
+            ring.lookAt(new THREE.Vector3(0, 0, 0));
+            globeGroup.add(ring);
+            
+            return ring;
+        };
+
+        const rings = Object.entries(CITY_COORDS).map(([name, coords]) => createHotspot(coords.lat, coords.lng, name));
+
         camera.position.z = 5;
 
         const animate = () => {
@@ -559,6 +616,14 @@ const CommandGlobe = ({ threats }) => {
             globeGroup.rotation.y += 0.0015;
             globeGroup.rotation.x += 0.0005;
             
+            const time = Date.now() * 0.002;
+            rings.forEach(ring => {
+                if (ring) {
+                    ring.scale.setScalar(1 + Math.sin(time) * 0.5);
+                    ring.material.opacity = 0.5 - Math.sin(time) * 0.3;
+                }
+            });
+
             // Pulse effect for arcs
             arcsRef.current.forEach(arc => {
                 if (arc.material.opacity > 0) {
@@ -670,26 +735,27 @@ const SystemLog = ({ threats }) => {
     );
 };
 
-const SystemMetrics = () => {
+const SystemMetrics = ({ securityLevel = 'LOW' }) => {
     const [metrics, setMetrics] = useState([
         { label: 'CPU LOAD', value: 24, unit: '%', color: 'text-brand-accent' },
         { label: 'MEMORY', value: 8.2, unit: 'GB', color: 'text-brand-neon' },
         { label: 'NETWORK', value: 425, unit: 'MB/s', color: 'text-brand-emerald' },
-        { label: 'SECURITY', value: 99.9, unit: '%', color: 'text-white' }
+        { label: 'INTEGRITY', value: 99.9, unit: '%', color: 'text-white' }
     ]);
 
     useEffect(() => {
         const interval = setInterval(() => {
             setMetrics(prev => prev.map(m => {
-                const change = (Math.random() - 0.5) * 2;
+                const multiplier = securityLevel === 'CRITICAL' ? 3 : securityLevel === 'HIGH' ? 1.5 : 1;
+                const change = (Math.random() - 0.5) * 2 * multiplier;
                 let newValue = m.value + change;
-                if (m.label === 'SECURITY') newValue = Math.min(100, Math.max(99.5, newValue));
-                else if (m.label === 'CPU LOAD') newValue = Math.min(60, Math.max(15, newValue));
+                if (m.label === 'INTEGRITY') newValue = Math.min(100, Math.max(98.5, newValue));
+                else if (m.label === 'CPU LOAD') newValue = Math.min(95, Math.max(10, newValue));
                 return { ...m, value: parseFloat(newValue.toFixed(1)) };
             }));
-        }, 2000);
+        }, 1500);
         return () => clearInterval(interval);
-    }, []);
+    }, [securityLevel]);
 
     return (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -697,7 +763,7 @@ const SystemMetrics = () => {
                 <div key={i} className="glass-panel p-4 rounded-lg border border-white/5 relative overflow-hidden group">
                     <div className="absolute bottom-0 left-0 w-full h-[1px] bg-gradient-to-right from-transparent via-brand-accent/50 to-transparent transform scale-x-0 group-hover:scale-x-100 transition-transform duration-500"></div>
                     <div className="text-[10px] text-gray-500 font-space tracking-widest mb-1">{m.label}</div>
-                    <div className={`text-xl font-orbitron ${m.color}`}>
+                    <div className={`text-xl font-orbitron ${m.color} tabular-nums`}>
                         {m.value}{m.unit}
                     </div>
                     <div className="mt-2 w-full h-1 bg-white/5 rounded-full overflow-hidden">
@@ -713,6 +779,262 @@ const SystemMetrics = () => {
     );
 };
 
+// --- Security Overview Component ---
+const SecurityOverview = ({ securityLevel }) => {
+    return (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8 relative z-10">
+            <div className="glass-panel p-6 rounded-xl border border-brand-accent/20 holo-card">
+                <div className="flex justify-between items-start mb-4">
+                    <span className="text-[10px] font-orbitron text-brand-accent tracking-widest uppercase">Global_Defense_Rating</span>
+                    <div className="w-2 h-2 rounded-full bg-brand-emerald animate-pulse"></div>
+                </div>
+                <div className="flex items-end gap-2">
+                    <span className="text-4xl font-orbitron text-white">98.4</span>
+                    <span className="text-brand-accent mb-1 text-sm font-mono">%</span>
+                </div>
+                <p className="text-[10px] text-gray-500 mt-2 font-space uppercase">Status: Optimal // No active breaches</p>
+            </div>
+            
+            <div className="glass-panel p-6 rounded-xl border border-brand-neon/20 holo-card">
+                <div className="flex justify-between items-start mb-4">
+                    <span className="text-[10px] font-orbitron text-brand-neon tracking-widest uppercase">Neural_Network_Load</span>
+                    <div className="w-2 h-2 rounded-full bg-brand-neon animate-pulse"></div>
+                </div>
+                <div className="flex items-end gap-2">
+                    <span className="text-4xl font-orbitron text-white">12.8</span>
+                    <span className="text-brand-neon mb-1 text-sm font-mono">MS</span>
+                </div>
+                <p className="text-[10px] text-gray-500 mt-2 font-space uppercase">Latency: Sub-millisecond // Peak Performance</p>
+            </div>
+
+            <div className={`glass-panel p-6 rounded-xl border ${securityLevel === 'CRITICAL' ? 'border-red-500' : 'border-brand-emerald/20'} holo-card`}>
+                <div className="flex justify-between items-start mb-4">
+                    <span className={`text-[10px] font-orbitron tracking-widest uppercase ${securityLevel === 'CRITICAL' ? 'text-red-500' : 'text-brand-emerald'}`}>Threat_Mitigation_Rate</span>
+                    <div className={`w-2 h-2 rounded-full animate-pulse ${securityLevel === 'CRITICAL' ? 'bg-red-500' : 'bg-brand-emerald'}`}></div>
+                </div>
+                <div className="flex items-end gap-2">
+                    <span className="text-4xl font-orbitron text-white">100</span>
+                    <span className="text-brand-emerald mb-1 text-sm font-mono">%</span>
+                </div>
+                <p className="text-[10px] text-gray-500 mt-2 font-space uppercase">Auto-Mitigation: Active // AI Response Ready</p>
+            </div>
+        </div>
+    );
+};
+
+// --- Neural Node Map Component ---
+const NeuralNodeMap = () => {
+    const [nodes, setNodes] = useState([]);
+    const [selectedNode, setSelectedNode] = useState(null);
+
+    useEffect(() => {
+        const fetchNodes = async () => {
+            try {
+                const res = await fetch('/api/nodes').catch(() => null);
+                if (res && res.ok) {
+                    const data = await res.json();
+                    setNodes(data);
+                } else {
+                    // Fallback
+                    const initialNodes = Array.from({ length: 48 }).map((_, i) => ({
+                        id: i,
+                        status: Math.random() > 0.1 ? 'ACTIVE' : 'WARNING',
+                        load: Math.random() * 100,
+                        sector: ['ALPHA', 'BETA', 'GAMMA', 'DELTA'][Math.floor(i / 12)]
+                    }));
+                    setNodes(initialNodes);
+                }
+            } catch (e) {}
+        };
+
+        fetchNodes();
+        
+        const interval = setInterval(() => {
+            setNodes(prev => prev.map(n => ({
+                ...n,
+                load: Math.min(100, Math.max(0, n.load + (Math.random() - 0.5) * 15)),
+                status: n.load > 85 ? 'CRITICAL' : n.load > 60 ? 'WARNING' : 'ACTIVE'
+            })));
+        }, 2000);
+        return () => clearInterval(interval);
+    }, []);
+
+    return (
+        <div className="glass-panel p-4 rounded-lg border border-white/10 h-full flex flex-col bg-brand-dark/40 relative overflow-hidden">
+            <div className="absolute inset-0 scanline-overlay opacity-5"></div>
+            <div className="flex justify-between items-center mb-4 border-b border-white/10 pb-2 relative z-10">
+                <span className="text-[10px] font-orbitron text-brand-accent tracking-widest uppercase">Neural_Node_Matrix</span>
+                <span className="text-[8px] font-mono text-gray-500">SECTORS: 04</span>
+            </div>
+            
+            <div className="grid grid-cols-6 md:grid-cols-8 gap-1.5 flex-1 relative z-10">
+                {nodes.map(node => (
+                    <motion.div 
+                        key={node.id}
+                        onMouseEnter={() => { setSelectedNode(node); playSound('hover'); }}
+                        animate={{ 
+                            backgroundColor: node.status === 'CRITICAL' ? '#ef4444' : node.status === 'WARNING' ? '#f59e0b' : '#00F0FF',
+                            opacity: node.status === 'CRITICAL' ? [0.4, 1, 0.4] : 0.6
+                        }}
+                        transition={{ duration: node.status === 'CRITICAL' ? 0.5 : 2, repeat: Infinity }}
+                        className="aspect-square rounded-sm border border-white/5 cursor-crosshair relative group"
+                    >
+                        {selectedNode?.id === node.id && (
+                            <div className="absolute inset-0 border border-white animate-pulse z-20"></div>
+                        )}
+                    </motion.div>
+                ))}
+            </div>
+
+            <AnimatePresence>
+                {selectedNode && (
+                    <motion.div 
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: 10 }}
+                        className="mt-4 p-2 bg-black/60 rounded border border-white/10 relative z-10"
+                    >
+                        <div className="flex justify-between items-center">
+                            <span className="text-[8px] font-mono text-brand-accent">NODE_{selectedNode.id} // SECTOR_{selectedNode.sector}</span>
+                            <span className={`text-[8px] font-mono ${selectedNode.status === 'CRITICAL' ? 'text-red-500' : 'text-brand-emerald'}`}>{selectedNode.status}</span>
+                        </div>
+                        <div className="mt-1 h-1 w-full bg-white/5 rounded-full overflow-hidden">
+                            <div className="h-full bg-brand-accent transition-all duration-300" style={{ width: `${selectedNode.load}%` }}></div>
+                        </div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+        </div>
+    );
+};
+
+// --- Node Matrix Component ---
+const NodeMatrix = ({ count = 64 }) => {
+    const [nodes, setNodes] = useState([]);
+
+    useEffect(() => {
+        const initialNodes = Array.from({ length: count }).map((_, i) => ({
+            id: i,
+            status: Math.random() > 0.1 ? 'healthy' : 'active',
+            load: Math.random() * 100
+        }));
+        setNodes(initialNodes);
+
+        const interval = setInterval(() => {
+            setNodes(prev => prev.map(n => ({
+                ...n,
+                status: Math.random() > 0.95 ? (n.status === 'healthy' ? 'active' : 'healthy') : n.status,
+                load: Math.min(100, Math.max(0, n.load + (Math.random() - 0.5) * 10))
+            })));
+        }, 1000);
+        return () => clearInterval(interval);
+    }, [count]);
+
+    return (
+        <div className="glass-panel p-4 rounded-lg border border-white/10 h-full flex flex-col">
+            <div className="flex justify-between items-center mb-4 border-b border-white/10 pb-2">
+                <span className="text-xs font-orbitron text-brand-accent tracking-widest uppercase">Node_Matrix_State</span>
+                <div className="flex gap-1">
+                    <div className="w-1 h-1 rounded-full bg-brand-emerald"></div>
+                    <div className="w-1 h-1 rounded-full bg-brand-accent"></div>
+                    <div className="w-1 h-1 rounded-full bg-red-500"></div>
+                </div>
+            </div>
+            <div className="grid grid-cols-8 gap-2 flex-1">
+                {nodes.map(node => (
+                    <motion.div 
+                        key={node.id}
+                        animate={{ 
+                            backgroundColor: node.status === 'active' ? '#00F0FF' : '#1a2333',
+                            opacity: node.status === 'active' ? [0.4, 1, 0.4] : 0.6
+                        }}
+                        transition={{ duration: node.status === 'active' ? 1 : 2, repeat: Infinity }}
+                        className="aspect-square rounded-[2px] border border-white/5 relative group cursor-crosshair"
+                    >
+                        <div className="absolute inset-0 opacity-0 group-hover:opacity-100 bg-brand-accent/20 transition-opacity flex items-center justify-center">
+                            <span className="text-[6px] font-mono text-white">{Math.round(node.load)}%</span>
+                        </div>
+                    </motion.div>
+                ))}
+            </div>
+            <div className="mt-4 text-[8px] font-mono text-gray-500 flex justify-between">
+                <span>TOTAL_NODES: {count}</span>
+                <span className="text-brand-emerald">SYNC: OK</span>
+            </div>
+        </div>
+    );
+};
+
+// --- Traffic Monitor Component ---
+const TrafficMonitor = () => {
+    const [data, setData] = useState(Array.from({ length: 20 }).map(() => Math.random() * 40 + 20));
+
+    useEffect(() => {
+        const interval = setInterval(() => {
+            setData(prev => [...prev.slice(1), Math.random() * 50 + 20]);
+        }, 800);
+        return () => clearInterval(interval);
+    }, []);
+
+    return (
+        <div className="glass-panel p-4 rounded-lg border border-white/10 h-full flex flex-col relative overflow-hidden group">
+            <div className="absolute inset-0 bg-grid-pattern opacity-10 pointer-events-none"></div>
+            <div className="flex justify-between items-center mb-4 border-b border-white/10 pb-2 relative z-10">
+                <span className="text-xs font-orbitron text-brand-neon tracking-widest uppercase">Traffic_Throughput</span>
+                <span className="text-[10px] font-mono text-brand-neon animate-pulse">LIVE</span>
+            </div>
+            <div className="flex-1 flex items-end gap-1 relative z-10">
+                {data.map((h, i) => (
+                    <motion.div 
+                        key={i}
+                        initial={{ height: 0 }}
+                        animate={{ height: `${h}%` }}
+                        transition={{ duration: 0.5 }}
+                        className={`flex-1 rounded-t-sm ${h > 60 ? 'bg-red-500' : 'bg-brand-neon/60'} transition-colors duration-300`}
+                    />
+                ))}
+            </div>
+            <div className="mt-2 flex justify-between items-center relative z-10">
+                <div className="text-[8px] font-mono text-gray-500 uppercase">Latency: {(Math.random() * 5 + 2).toFixed(1)}ms</div>
+                <div className="text-[8px] font-mono text-brand-neon">VOL: {Math.round(Math.random() * 1000 + 500)} KB/s</div>
+            </div>
+        </div>
+    );
+};
+
+// --- Diagnostics Panel Component ---
+const DiagnosticsPanel = () => {
+    const lines = [
+        "KERNEL_MODULE: Loaded [X-77]",
+        "CRYPTO_SYNC: AES-GCM-256",
+        "NEURAL_LATENCY: 0.04ms",
+        "FIREWALL_V4: ACTIVE",
+        "SENTINEL_NODE: ENGAGED",
+        "QUANTUM_SHIELD: 98.4%",
+        "DDoS_PROTECTION: ON",
+        "BUFFER_STATE: STABLE"
+    ];
+
+    return (
+        <div className="glass-panel p-4 rounded-lg border border-white/10 h-full flex flex-col bg-brand-dark/20">
+            <div className="text-xs font-orbitron text-gray-400 tracking-widest mb-4 uppercase border-b border-white/5 pb-2">System_Diagnostics</div>
+            <div className="space-y-2 flex-1">
+                {lines.map((line, i) => (
+                    <div key={i} className="flex justify-between items-center">
+                        <span className="text-[9px] font-mono text-gray-500">{line.split(': ')[0]}</span>
+                        <div className="flex items-center gap-2">
+                            <div className="w-12 h-1 bg-white/5 rounded-full overflow-hidden">
+                                <motion.div animate={{ width: ['20%', '80%', '40%'] }} transition={{ duration: 3 + i, repeat: Infinity }} className="h-full bg-brand-accent/40"></motion.div>
+                            </div>
+                            <span className="text-[9px] font-mono text-brand-accent">{line.split(': ')[1]}</span>
+                        </div>
+                    </div>
+                ))}
+            </div>
+        </div>
+    );
+};
+
 const CommandCenter = ({ onExit }) => {
     const [threats, setThreats] = useState([
         { id: 1, type: 'CRITICAL', origin: '192.168.1.104', action: 'SQL Injection Blocked', location: 'Tokyo, JP' },
@@ -720,6 +1042,7 @@ const CommandCenter = ({ onExit }) => {
         { id: 3, type: 'INFO', origin: '10.0.4.22', action: 'Neural Node Sync', location: 'Global' }
     ]);
     const [mitigationLogs, setMitigationLogs] = useState([]);
+    const [securityLevel, setSecurityLevel] = useState('LOW');
 
     const handleMitigate = async (id) => {
         playSound('click');
@@ -728,8 +1051,9 @@ const CommandCenter = ({ onExit }) => {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ id })
-            });
-            const data = await res.json();
+            }).catch(() => ({ ok: true, json: () => Promise.resolve({ success: true, message: "Threat neutralized locally (Simulated)." }) }));
+            
+            const data = await (res.ok ? res.json() : res.json());
             
             const timestamp = new Date().toLocaleTimeString();
             setMitigationLogs(prev => [`[${timestamp}] MITIGATION: ${data.message}`, ...prev].slice(0, 5));
@@ -758,12 +1082,12 @@ const CommandCenter = ({ onExit }) => {
 
     return (
         <motion.div 
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[60] bg-brand-black flex flex-col p-4 md:p-8 pt-24"
+            initial={{ opacity: 0, scale: 1.1, filter: 'blur(10px)' }}
+            animate={{ opacity: 1, scale: 1, filter: 'blur(0px)' }}
+            exit={{ opacity: 0, scale: 0.9, filter: 'blur(10px)' }}
+            className={`fixed inset-0 z-[60] bg-brand-black flex flex-col p-4 md:p-8 pt-24 overflow-hidden transition-all duration-500 ${securityLevel === 'CRITICAL' ? 'bg-red-950/20' : ''}`}
         >
-            <div className="absolute inset-0 cyber-grid opacity-20 pointer-events-none"></div>
+            <div className={`absolute inset-0 cyber-grid opacity-20 pointer-events-none ${securityLevel === 'CRITICAL' ? 'text-red-500' : ''}`}></div>
             <div className="scanning-line"></div>
             
             {/* Header / Info Bar */}
@@ -774,30 +1098,40 @@ const CommandCenter = ({ onExit }) => {
                         <svg className="w-8 h-8 text-brand-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>
                     </div>
                     <div>
-                        <h2 className="font-orbitron text-2xl md:text-3xl text-white font-black tracking-tighter">AEGIS <span className="text-brand-accent">COMMAND</span></h2>
+                        <h2 className="font-orbitron text-2xl md:text-3xl text-white font-black tracking-tighter uppercase">Aegis_Command_Center</h2>
                         <div className="flex items-center gap-2">
-                            <span className="w-2 h-2 rounded-full bg-brand-emerald animate-pulse"></span>
-                            <p className="text-[10px] font-mono text-brand-emerald">UPLINK_SECURE: AES-256-GCM | NODES_SYNCED: 104</p>
+                            <span className={`w-2 h-2 rounded-full animate-pulse ${securityLevel === 'CRITICAL' ? 'bg-red-500' : 'bg-brand-emerald'}`}></span>
+                            <p className={`text-[10px] font-mono ${securityLevel === 'CRITICAL' ? 'text-red-500' : 'text-brand-emerald'}`}>UPLINK_SECURE: AES-256-GCM | NODES_SYNCED: 104 | DEFENSE_STATE: {securityLevel}</p>
                         </div>
                     </div>
                 </div>
-                <div className="flex gap-4">
-                    <div className="hidden md:flex flex-col items-end">
-                        <span className="text-[10px] text-gray-500 font-mono">MITIGATION_STATUS</span>
-                        <span className="text-xs text-brand-emerald font-mono">READY // WAITING</span>
+                
+                <div className="flex items-center gap-4">
+                    <div className="flex p-1 bg-white/5 rounded border border-white/10 gap-2">
+                        {['LOW', 'HIGH', 'CRITICAL'].map(level => (
+                            <button 
+                                key={level}
+                                onClick={() => { setSecurityLevel(level); playSound('click'); }}
+                                className={`px-3 py-1 text-[8px] font-orbitron tracking-widest transition-all ${securityLevel === level ? (level === 'CRITICAL' ? 'bg-red-500 text-black' : 'bg-brand-accent text-black') : 'text-gray-500 hover:text-white'}`}
+                            >
+                                {level}
+                            </button>
+                        ))}
                     </div>
                     <button 
                         onClick={onExit}
                         className="px-6 py-2 border border-red-500/50 text-red-500 font-space text-xs hover:bg-red-500 hover:text-black transition-all tracking-widest uppercase"
                     >
-                        Disconnect Session
+                        Disconnect
                     </button>
                 </div>
             </div>
 
-            <div className="flex-1 grid grid-cols-1 lg:grid-cols-4 gap-6 relative z-10 overflow-hidden">
+            <SecurityOverview securityLevel={securityLevel} />
+
+            <div className="flex-1 grid grid-cols-1 lg:grid-cols-12 gap-6 relative z-10 overflow-hidden">
                 {/* Left Sidebar: Threat Feed & Log */}
-                <div className="lg:col-span-1 flex flex-col gap-6 h-full overflow-hidden">
+                <div className="lg:col-span-3 flex flex-col gap-6 h-full overflow-hidden">
                     <div className="flex-1 overflow-hidden">
                         <ThreatFeed threats={threats} onMitigate={handleMitigate} />
                     </div>
@@ -806,64 +1140,49 @@ const CommandCenter = ({ onExit }) => {
                     </div>
                 </div>
 
-                {/* Main Content: Globe and Metrics */}
-                <div className="lg:col-span-3 flex flex-col gap-6 overflow-hidden">
-                    {/* Visual Centerpiece */}
-                    <div className="flex-1 glass-panel rounded-xl border border-white/10 relative overflow-hidden bg-brand-dark/40 flex flex-col">
+                {/* Main Content: Globe and Node Matrix */}
+                <div className="lg:col-span-6 flex flex-col gap-6 overflow-hidden">
+                    <div className="flex-1 glass-panel rounded-xl border border-white/10 relative overflow-hidden bg-brand-dark/40 flex flex-col group">
+                        <div className="absolute inset-0 scanline-overlay opacity-10 pointer-events-none"></div>
                         <div className="absolute top-4 left-4 z-20">
-                            <span className="text-[10px] font-orbitron text-brand-accent tracking-[0.2em] uppercase">Tactical_Globe_v9</span>
+                            <span className="text-[10px] font-orbitron text-brand-accent tracking-[0.2em] uppercase neon-text-pulse">Tactical_Globe_v9</span>
                         </div>
-                        
                         <div className="flex-1 relative cursor-move">
                             <CommandGlobe threats={threats} />
-                            
-                            {/* HUD Overlays */}
                             <div className="absolute inset-0 pointer-events-none">
-                                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[80%] aspect-square border border-white/5 rounded-full"></div>
-                                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[60%] aspect-square border border-white/5 rounded-full"></div>
-                                
+                                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[85%] aspect-square border border-white/5 rounded-full"></div>
                                 <motion.div 
                                     animate={{ rotate: 360 }}
-                                    transition={{ duration: 30, repeat: Infinity, ease: "linear" }}
-                                    className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[90%] aspect-square border-t-2 border-brand-accent/20 rounded-full"
+                                    transition={{ duration: 40, repeat: Infinity, ease: "linear" }}
+                                    className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[95%] aspect-square border-t border-brand-accent/20 rounded-full"
                                 ></motion.div>
-                            </div>
-
-                            {/* Mitigation Log Overlay */}
-                            <div className="absolute top-4 right-4 z-20 w-48 pointer-events-none">
-                                {mitigationLogs.map((log, i) => (
-                                    <motion.div 
-                                        key={i}
-                                        initial={{ opacity: 0, x: 20 }}
-                                        animate={{ opacity: 1, x: 0 }}
-                                        exit={{ opacity: 0 }}
-                                        className="text-[8px] font-mono text-brand-emerald mb-1 text-right bg-black/40 p-1"
-                                    >
-                                        {log}
-                                    </motion.div>
-                                ))}
-                            </div>
-                        </div>
-
-                        {/* Corner Accents */}
-                        <div className="absolute top-1/2 right-4 -translate-y-1/2 font-mono text-[8px] text-gray-600 text-right space-y-2">
-                            <div>LAT: 35.6895<br/>LONG: 139.6917</div>
-                            <div className="text-brand-emerald">STATUS: ACTIVE</div>
-                            <div className="pt-4">
-                                <div className="w-16 h-1 bg-white/10 ml-auto">
-                                    <motion.div animate={{ width: ['0%', '100%', '0%'] }} transition={{ duration: 2, repeat: Infinity }} className="h-full bg-brand-accent"></motion.div>
+                                <div className="absolute inset-0 flex items-center justify-center">
+                                    <div className="w-[110%] h-[1px] bg-brand-accent/5 rotate-45"></div>
+                                    <div className="w-[110%] h-[1px] bg-brand-accent/5 -rotate-45"></div>
                                 </div>
                             </div>
                         </div>
-                        <div className="absolute bottom-4 left-4 font-mono text-[8px] text-gray-600">
-                            CRYPT_VER: v9.42.0<br/>
-                            PROTOCOL: X-77-NEURAL
+                        <div className="absolute bottom-4 left-4 font-mono text-[8px] text-gray-600 flex gap-4">
+                            <span>CRYPT_VER: v9.42.0</span>
+                            <span className="text-brand-accent/30 tracking-widest">||||||||||||||||||||||||||</span>
+                            <span>NODE: X-77-NEURAL</span>
                         </div>
                     </div>
-
-                    {/* Bottom Metrics */}
                     <div className="h-fit">
-                        <SystemMetrics />
+                        <SystemMetrics securityLevel={securityLevel} />
+                    </div>
+                </div>
+
+                {/* Right Sidebar: Node Matrix & Traffic Monitor */}
+                <div className="lg:col-span-3 flex flex-col gap-6 h-full overflow-hidden">
+                    <div className="flex-1 overflow-hidden">
+                        <NeuralNodeMap />
+                    </div>
+                    <div className="flex-1 overflow-hidden">
+                        <TrafficMonitor />
+                    </div>
+                    <div className="h-48 shrink-0 overflow-hidden">
+                        <DiagnosticsPanel />
                     </div>
                 </div>
             </div>
@@ -1385,17 +1704,25 @@ const App = () => {
 
     const handleInitializeSys = async () => {
         playSound('click');
+        setToast({ message: 'Establishing Secure Uplink...', type: 'success' });
+        
         try {
-            const res = await fetch('/api/status');
-            const data = await res.json();
-            setToast({ message: `System Check: ${data.message}`, type: 'success' });
-            setTimeout(() => {
-                setCurrentView('command');
-                playSound('success');
-            }, 1000);
+            const res = await fetch('/api/status').catch(() => null);
+            if (res && res.ok) {
+                const data = await res.json();
+                setTimeout(() => setToast({ message: `System Check: ${data.message}`, type: 'success' }), 500);
+            } else {
+                setTimeout(() => setToast({ message: 'Uplink Offline: Engaging Simulated Environment', type: 'success' }), 500);
+            }
         } catch (err) {
-            setToast({ message: 'Error: Cannot reach backend server.', type: 'error' });
+            setTimeout(() => setToast({ message: 'Initializing Local Neural Matrix...', type: 'success' }), 500);
         }
+        
+        // Extended delay for cinematic effect
+        setTimeout(() => {
+            setCurrentView('command');
+            playSound('success');
+        }, 1500);
     };
 
     const renderView = () => {

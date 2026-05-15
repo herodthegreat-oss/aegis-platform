@@ -15,11 +15,26 @@ def get_status():
         "status": "operational",
         "message": "All defense matrices are active and fully operational.",
         "threatLevel": "Low",
-        "uptime": "99.99%",
-        "activeNodes": 104,
+        "uptime": "99.9994%",
+        "activeNodes": 1024,
         "blockedToday": 1492031,
-        "lastBreach": "None detected"
+        "lastBreach": "None detected",
+        "neuralSync": "98.7%",
+        "quantumEntropy": "0.00042"
     })
+
+@app.route('/api/nodes', methods=['GET'])
+def get_nodes():
+    import random
+    nodes = []
+    for i in range(48):
+        nodes.append({
+            "id": i,
+            "load": random.randint(10, 95),
+            "status": "ACTIVE" if random.random() > 0.05 else "WARNING",
+            "sector": random.choice(["ALPHA", "BETA", "GAMMA", "DELTA"])
+        })
+    return jsonify(nodes)
 
 @app.route('/api/mitigate', methods=['POST'])
 def mitigate_threat():
