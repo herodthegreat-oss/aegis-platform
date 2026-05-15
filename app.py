@@ -15,7 +15,20 @@ def get_status():
         "status": "operational",
         "message": "All defense matrices are active and fully operational.",
         "threatLevel": "Low",
-        "uptime": "99.99%"
+        "uptime": "99.99%",
+        "activeNodes": 104,
+        "blockedToday": 1492031,
+        "lastBreach": "None detected"
+    })
+
+@app.route('/api/mitigate', methods=['POST'])
+def mitigate_threat():
+    data = request.json
+    threat_id = data.get('id')
+    return jsonify({
+        "success": True,
+        "message": f"Threat {threat_id} mitigated. Firewall rules updated.",
+        "mitigationId": "AEGIS-MIT-" + str(hash(str(threat_id)))[-4:]
     })
 
 @app.route('/api/deploy', methods=['POST'])

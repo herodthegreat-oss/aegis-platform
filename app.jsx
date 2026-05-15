@@ -1,5 +1,19 @@
 const { useState, useEffect, useRef } = React;
-const { motion, useScroll, useTransform, AnimatePresence } = window.Motion;
+const { motion, useScroll, useTransform, AnimatePresence } = window.Motion || window.framerMotion || {};
+
+// --- Coordinate Mapping ---
+const CITY_COORDS = {
+    'Tokyo, JP': { lat: 35.6762, lng: 139.6503 },
+    'London, UK': { lat: 51.5074, lng: -0.1278 },
+    'Singapore': { lat: 1.3521, lng: 103.8198 },
+    'New York': { lat: 40.7128, lng: -74.0060 },
+    'Berlin': { lat: 52.5200, lng: 13.4050 },
+    'Seoul': { lat: 37.5665, lng: 126.9780 },
+    'Sydney': { lat: -33.8688, lng: 151.2093 },
+    'Global': { lat: 0, lng: 0 }
+};
+
+const getCoords = (location) => CITY_COORDS[location] || { lat: (Math.random() - 0.5) * 160, lng: (Math.random() - 0.5) * 320 };
 
 // --- Audio System ---
 const playSound = (type) => {
@@ -162,6 +176,127 @@ const CyberBackground = () => {
     return <div ref={mountRef} id="canvas-container" className="fixed top-0 left-0 w-full h-full pointer-events-none -z-10" />;
 };
 
+// --- Boot Sequence Component ---
+const BootSequence = ({ onComplete }) => {
+    const [lines, setLines] = useState([]);
+    const [index, setIndex] = useState(0);
+    
+    const bootLines = [
+        "AEGIS_CORE v9.42.0 INITIALIZING...",
+        "CONNECTING TO NEURAL_GRID_77...",
+        "AUTHENTICATING QUANTUM_KEYS...",
+        "SECURE_TUNNEL ESTABLISHED [AES-256-GCM]",
+        "LOADING THREAT_DATABASE...",
+        "CHECKING NODE_INTEGRITY...",
+        "SYSTEM_ARMED // STATUS_READY"
+    ];
+
+    useEffect(() => {
+        if (index < bootLines.length) {
+            const timer = setTimeout(() => {
+                setLines(prev => [...prev, bootLines[index]]);
+                setIndex(index + 1);
+            }, index === 0 ? 500 : 300);
+            return () => clearTimeout(timer);
+        } else {
+            const timer = setTimeout(onComplete, 1000);
+            return () => clearTimeout(timer);
+        }
+    }, [index, onComplete]);
+
+    return (
+        <div className="fixed inset-0 z-[100] bg-brand-black flex items-center justify-center p-8">
+            <div className="max-w-xl w-full">
+                <div className="flex items-center gap-4 mb-8">
+                    <div className="w-12 h-12 rounded border border-brand-accent flex items-center justify-center">
+                        <svg className="w-8 h-8 text-brand-accent animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>
+                    </div>
+                    <h1 className="font-orbitron text-2xl text-white tracking-[0.3em]">AEGIS<span className="text-brand-accent">_SYSTEMS</span></h1>
+                </div>
+                <div className="font-mono text-sm space-y-2 boot-text">
+                    {lines.map((line, i) => (
+                        <div key={i} className="flex gap-2">
+                            <span className="opacity-50">[{new Date().toLocaleTimeString()}]</span>
+                            <span>{line}</span>
+                        </div>
+                    ))}
+                    {index < bootLines.length && <span className="terminal-cursor"></span>}
+                </div>
+                <div className="mt-12 w-full h-1 bg-white/5 rounded-full overflow-hidden">
+                    <motion.div 
+                        initial={{ width: 0 }}
+                        animate={{ width: `${(index / bootLines.length) * 100}%` }}
+                        className="h-full bg-brand-accent shadow-[0_0_15px_#00F0FF]"
+                    />
+                </div>
+            </div>
+        </div>
+    );
+};
+
+// --- Network Topology Component ---
+const NetworkTopology = () => {
+    const nodes = [
+        { id: 'N1', x: 50, y: 50, type: 'CORE' },
+        { id: 'N2', x: 150, y: 120, type: 'NODE' },
+        { id: 'N3', x: 250, y: 40, type: 'NODE' },
+        { id: 'N4', x: 350, y: 150, type: 'NODE' },
+        { id: 'N5', x: 450, y: 80, type: 'NODE' },
+        { id: 'N6', x: 550, y: 130, type: 'NODE' },
+    ];
+
+    const links = [
+        { source: 'N1', target: 'N2' },
+        { source: 'N1', target: 'N3' },
+        { source: 'N2', target: 'N4' },
+        { source: 'N3', target: 'N4' },
+        { source: 'N4', target: 'N5' },
+        { source: 'N5', target: 'N6' },
+        { source: 'N2', target: 'N6' },
+    ];
+
+    return (
+        <div className="w-full h-64 bg-black/40 rounded-lg border border-white/5 relative overflow-hidden group">
+            <div className="absolute top-2 left-4 text-[8px] font-orbitron text-brand-accent tracking-widest uppercase">Network_Topology_Live</div>
+            <svg viewBox="0 0 600 200" className="w-full h-full">
+                {links.map((link, i) => {
+                    const s = nodes.find(n => n.id === link.source);
+                    const t = nodes.find(n => n.id === link.target);
+                    return (
+                        <line 
+                            key={i} 
+                            x1={s.x} y1={s.y} x2={t.x} y2={t.y} 
+                            className={`topology-link ${Math.random() > 0.5 ? 'active' : ''}`}
+                        />
+                    );
+                })}
+                {nodes.map((node, i) => (
+                    <g key={i}>
+                        <circle 
+                            cx={node.x} cy={node.y} r={node.type === 'CORE' ? 6 : 4} 
+                            className="topology-node"
+                        />
+                        {node.type === 'CORE' && (
+                            <circle cx={node.x} cy={node.y} r={12} className="stroke-brand-accent/20 fill-none animate-ping" />
+                        )}
+                        <text x={node.x + 8} y={node.y + 4} className="fill-gray-600 text-[6px] font-mono">{node.id}</text>
+                    </g>
+                ))}
+            </svg>
+            <div className="absolute bottom-2 right-4 flex gap-2">
+                <div className="flex items-center gap-1">
+                    <div className="w-1.5 h-1.5 rounded-full bg-brand-accent"></div>
+                    <span className="text-[6px] text-gray-500 font-mono uppercase">Sync</span>
+                </div>
+                <div className="flex items-center gap-1">
+                    <div className="w-1.5 h-1.5 rounded-full bg-brand-emerald"></div>
+                    <span className="text-[6px] text-gray-500 font-mono uppercase">Secure</span>
+                </div>
+            </div>
+        </div>
+    );
+};
+
 // --- Toast Component ---
 const Toast = ({ message, type, onClose }) => {
     useEffect(() => {
@@ -190,15 +325,20 @@ const DeploymentPage = ({ onComplete }) => {
 
     const runHackingSequence = async () => {
         const sequence = [
-            "Initializing secure protocol...",
-            "Bypassing firewall...",
-            "Establishing quantum-encrypted tunnel...",
-            "Deploying autonomous AI nodes...",
-            "System provisioned successfully."
+            "INITIALIZING_HANDSHAKE: [AES-256-GCM]",
+            "RECOGNIZING_TARGET_ENVIRONMENT...",
+            "BYPASSING_VIRTUAL_FIREWALL_v4.2...",
+            "PATCHING_CVE-2026-1024_EXPLOIT_VECTOR...",
+            "ESTABLISHING_QUANTUM_TUNNEL: [STABLE]",
+            "SYNCING_NEURAL_WEIGHTS: [NODE_ALPHA]",
+            "PROVISIONING_ISOLATED_CONTAINERS...",
+            "ENCRYPTING_LOCAL_DATABASE_NODES...",
+            "SYSTEM_DEPLOYMENT_COMPLETE: [SUCCESS]"
         ];
         for (let step of sequence) {
-            await new Promise(r => setTimeout(r, 600));
-            setLogs(prev => [...prev, `[OK] ${step}`]);
+            await new Promise(r => setTimeout(r, 400));
+            setLogs(prev => [...prev, `[INIT] ${step}`]);
+            playSound('hover');
         }
     };
 
@@ -327,7 +467,410 @@ const DeploymentPage = ({ onComplete }) => {
     );
 };
 
-// --- New Sub-Pages ---
+// --- Command Center Components ---
+
+const ThreatFeed = ({ threats, onMitigate }) => {
+    return (
+        <div className="glass-panel p-4 rounded-lg border border-white/10 h-full flex flex-col">
+            <div className="flex justify-between items-center mb-4 border-b border-white/10 pb-2">
+                <span className="text-xs font-orbitron text-brand-accent tracking-widest">LIVE THREAT FEED</span>
+                <span className="w-2 h-2 rounded-full bg-brand-emerald animate-pulse"></span>
+            </div>
+            <div className="flex-1 overflow-y-auto space-y-3 custom-scrollbar">
+                <AnimatePresence>
+                    {threats.map((t) => (
+                        <motion.div 
+                            key={t.id}
+                            initial={{ opacity: 0, x: -20 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            exit={{ opacity: 0, scale: 0.95 }}
+                            className={`text-[10px] md:text-xs font-mono p-2 bg-white/5 border-l-2 ${t.type === 'CRITICAL' ? 'border-red-500' : 'border-brand-accent/30'} flex flex-col gap-1 relative group hover:bg-white/10 transition-colors`}
+                        >
+                            <div className="flex justify-between">
+                                <span className={t.type === 'CRITICAL' ? 'text-red-500 glitch-text' : t.type === 'WARNING' ? 'text-yellow-500' : 'text-brand-emerald'}>[{t.type}]</span>
+                                <span className="text-gray-500">{t.location}</span>
+                            </div>
+                            <div className="text-white truncate">{t.action}</div>
+                            <div className="flex justify-between items-center mt-1">
+                                <div className="text-brand-accent/60 opacity-0 group-hover:opacity-100 transition-opacity">SRC: {t.origin}</div>
+                                <button 
+                                    onClick={() => onMitigate(t.id)}
+                                    className="text-[8px] px-2 py-0.5 border border-brand-accent/30 text-brand-accent hover:bg-brand-accent hover:text-black transition-all opacity-0 group-hover:opacity-100"
+                                >
+                                    MITIGATE
+                                </button>
+                            </div>
+                        </motion.div>
+                    ))}
+                </AnimatePresence>
+            </div>
+        </div>
+    );
+};
+
+const CommandGlobe = ({ threats }) => {
+    const mountRef = useRef(null);
+    const globeRef = useRef(null);
+    const arcsRef = useRef([]);
+
+    useEffect(() => {
+        const currentMount = mountRef.current;
+        if (!currentMount) return;
+
+        const width = currentMount.clientWidth;
+        const height = currentMount.clientHeight;
+
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+        renderer.setSize(width, height);
+        currentMount.appendChild(renderer.domElement);
+
+        const globeGroup = new THREE.Group();
+        scene.add(globeGroup);
+        globeRef.current = globeGroup;
+
+        // Globe Geometry
+        const geometry = new THREE.SphereGeometry(2, 32, 32);
+        const material = new THREE.MeshBasicMaterial({
+            color: '#00F0FF',
+            wireframe: true,
+            transparent: true,
+            opacity: 0.1
+        });
+        const sphere = new THREE.Mesh(geometry, material);
+        globeGroup.add(sphere);
+
+        // Particle Points for vertices
+        const pointsGeometry = new THREE.SphereGeometry(2, 24, 24);
+        const pointsMaterial = new THREE.PointsMaterial({
+            size: 0.02,
+            color: '#00F0FF',
+            transparent: true,
+            opacity: 0.5
+        });
+        const points = new THREE.Points(pointsGeometry, pointsMaterial);
+        globeGroup.add(points);
+
+        camera.position.z = 5;
+
+        const animate = () => {
+            requestAnimationFrame(animate);
+            globeGroup.rotation.y += 0.0015;
+            globeGroup.rotation.x += 0.0005;
+            
+            // Pulse effect for arcs
+            arcsRef.current.forEach(arc => {
+                if (arc.material.opacity > 0) {
+                    arc.material.opacity -= 0.005;
+                    if (arc.material.opacity <= 0) {
+                        scene.remove(arc);
+                    }
+                }
+            });
+
+            renderer.render(scene, camera);
+        };
+        animate();
+
+        const handleResize = () => {
+            const w = currentMount.clientWidth;
+            const h = currentMount.clientHeight;
+            camera.aspect = w / h;
+            camera.updateProjectionMatrix();
+            renderer.setSize(w, h);
+        };
+        window.addEventListener('resize', handleResize);
+
+        return () => {
+            window.removeEventListener('resize', handleResize);
+            if (currentMount.contains(renderer.domElement)) {
+                currentMount.removeChild(renderer.domElement);
+            }
+            scene.clear();
+            renderer.dispose();
+        };
+    }, []);
+
+    // Create arc on new threat
+    useEffect(() => {
+        if (threats.length > 0 && globeRef.current) {
+            const latest = threats[0];
+            const startLoc = getCoords(latest.location);
+            const endLoc = { lat: 0, lng: 0 }; // Default to central HQ
+
+            const createArc = (lat1, lng1, lat2, lng2) => {
+                const radius = 2;
+                const points = [];
+                for (let i = 0; i <= 20; i++) {
+                    const p = i / 20;
+                    const lat = lat1 + (lat2 - lat1) * p;
+                    const lng = lng1 + (lng2 - lng1) * p;
+                    const phi = (90 - lat) * (Math.PI / 180);
+                    const theta = (lng + 180) * (Math.PI / 180);
+                    
+                    // Add altitude to arc
+                    const alt = Math.sin(p * Math.PI) * 0.5;
+                    const r = radius + alt;
+
+                    points.push(new THREE.Vector3(
+                        r * Math.sin(phi) * Math.cos(theta),
+                        r * Math.cos(phi),
+                        r * Math.sin(phi) * Math.sin(theta)
+                    ));
+                }
+                const curve = new THREE.CatmullRomCurve3(points);
+                const geometry = new THREE.BufferGeometry().setFromPoints(curve.getPoints(50));
+                const material = new THREE.LineBasicMaterial({ 
+                    color: latest.type === 'CRITICAL' ? '#ff0000' : '#00F0FF',
+                    transparent: true,
+                    opacity: 1
+                });
+                const line = new THREE.Line(geometry, material);
+                globeRef.current.add(line);
+                arcsRef.current.push(line);
+            };
+
+            createArc(startLoc.lat, startLoc.lng, endLoc.lat, endLoc.lng);
+        }
+    }, [threats]);
+
+    return <div ref={mountRef} className="w-full h-full" />;
+};
+
+const SystemLog = ({ threats }) => {
+    const [sysLogs, setSysLogs] = useState([
+        "System initialization complete.",
+        "Uplink established with Node_Alpha.",
+        "Monitoring global telemetry streams..."
+    ]);
+
+    useEffect(() => {
+        if (threats.length > 0) {
+            const latest = threats[0];
+            const timestamp = new Date().toLocaleTimeString();
+            const log = `[${timestamp}] ALERT: ${latest.type} from ${latest.origin} - ${latest.action}`;
+            setSysLogs(prev => [log, ...prev].slice(0, 15));
+        }
+    }, [threats]);
+
+    return (
+        <div className="glass-panel p-4 rounded-lg border border-white/10 font-mono text-[10px] h-48 overflow-y-auto custom-scrollbar bg-black/40">
+            <div className="flex items-center gap-2 mb-2 text-brand-accent border-b border-white/10 pb-1">
+                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                <span className="tracking-widest uppercase">System Telemetry Log</span>
+            </div>
+            {sysLogs.map((log, i) => (
+                <div key={i} className="mb-1 text-gray-400 log-entry-enter">
+                    <span className="text-brand-emerald opacity-50 mr-2">{'>'}</span>
+                    {log}
+                </div>
+            ))}
+        </div>
+    );
+};
+
+const SystemMetrics = () => {
+    const [metrics, setMetrics] = useState([
+        { label: 'CPU LOAD', value: 24, unit: '%', color: 'text-brand-accent' },
+        { label: 'MEMORY', value: 8.2, unit: 'GB', color: 'text-brand-neon' },
+        { label: 'NETWORK', value: 425, unit: 'MB/s', color: 'text-brand-emerald' },
+        { label: 'SECURITY', value: 99.9, unit: '%', color: 'text-white' }
+    ]);
+
+    useEffect(() => {
+        const interval = setInterval(() => {
+            setMetrics(prev => prev.map(m => {
+                const change = (Math.random() - 0.5) * 2;
+                let newValue = m.value + change;
+                if (m.label === 'SECURITY') newValue = Math.min(100, Math.max(99.5, newValue));
+                else if (m.label === 'CPU LOAD') newValue = Math.min(60, Math.max(15, newValue));
+                return { ...m, value: parseFloat(newValue.toFixed(1)) };
+            }));
+        }, 2000);
+        return () => clearInterval(interval);
+    }, []);
+
+    return (
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {metrics.map((m, i) => (
+                <div key={i} className="glass-panel p-4 rounded-lg border border-white/5 relative overflow-hidden group">
+                    <div className="absolute bottom-0 left-0 w-full h-[1px] bg-gradient-to-right from-transparent via-brand-accent/50 to-transparent transform scale-x-0 group-hover:scale-x-100 transition-transform duration-500"></div>
+                    <div className="text-[10px] text-gray-500 font-space tracking-widest mb-1">{m.label}</div>
+                    <div className={`text-xl font-orbitron ${m.color}`}>
+                        {m.value}{m.unit}
+                    </div>
+                    <div className="mt-2 w-full h-1 bg-white/5 rounded-full overflow-hidden">
+                        <motion.div 
+                            initial={{ width: 0 }}
+                            animate={{ width: `${(m.value / (m.label === 'MEMORY' ? 16 : 100)) * 100}%` }}
+                            className={`h-full ${m.color.replace('text-', 'bg-')}`}
+                        ></motion.div>
+                    </div>
+                </div>
+            ))}
+        </div>
+    );
+};
+
+const CommandCenter = ({ onExit }) => {
+    const [threats, setThreats] = useState([
+        { id: 1, type: 'CRITICAL', origin: '192.168.1.104', action: 'SQL Injection Blocked', location: 'Tokyo, JP' },
+        { id: 2, type: 'WARNING', origin: '45.12.33.19', action: 'Port Scan Detected', location: 'London, UK' },
+        { id: 3, type: 'INFO', origin: '10.0.4.22', action: 'Neural Node Sync', location: 'Global' }
+    ]);
+    const [mitigationLogs, setMitigationLogs] = useState([]);
+
+    const handleMitigate = async (id) => {
+        playSound('click');
+        try {
+            const res = await fetch('/api/mitigate', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id })
+            });
+            const data = await res.json();
+            
+            const timestamp = new Date().toLocaleTimeString();
+            setMitigationLogs(prev => [`[${timestamp}] MITIGATION: ${data.message}`, ...prev].slice(0, 5));
+            setThreats(prev => prev.filter(t => t.id !== id));
+            playSound('success');
+        } catch (e) {
+            console.error(e);
+        }
+    };
+
+    useEffect(() => {
+        const interval = setInterval(() => {
+            const locations = Object.keys(CITY_COORDS).filter(k => k !== 'Global');
+            const newThreat = {
+                id: Date.now(),
+                type: ['CRITICAL', 'WARNING', 'INFO'][Math.floor(Math.random() * 3)],
+                origin: `${Math.floor(Math.random() * 255)}.${Math.floor(Math.random() * 255)}.${Math.floor(Math.random() * 255)}.${Math.floor(Math.random() * 255)}`,
+                action: ['DDoS Mitigation', 'Brute Force Blocked', 'XSS Deflected', 'Encrypted Handshake'][Math.floor(Math.random() * 4)],
+                location: locations[Math.floor(Math.random() * locations.length)]
+            };
+            setThreats(prev => [newThreat, ...prev].slice(0, 8));
+            if (newThreat.type === 'CRITICAL') playSound('hover');
+        }, 4000);
+        return () => clearInterval(interval);
+    }, []);
+
+    return (
+        <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[60] bg-brand-black flex flex-col p-4 md:p-8 pt-24"
+        >
+            <div className="absolute inset-0 cyber-grid opacity-20 pointer-events-none"></div>
+            <div className="scanning-line"></div>
+            
+            {/* Header / Info Bar */}
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6 relative z-10">
+                <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 rounded border border-brand-accent/50 flex items-center justify-center bg-brand-accent/5 relative">
+                        <div className="absolute inset-0 animate-pulse bg-brand-accent/10"></div>
+                        <svg className="w-8 h-8 text-brand-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>
+                    </div>
+                    <div>
+                        <h2 className="font-orbitron text-2xl md:text-3xl text-white font-black tracking-tighter">AEGIS <span className="text-brand-accent">COMMAND</span></h2>
+                        <div className="flex items-center gap-2">
+                            <span className="w-2 h-2 rounded-full bg-brand-emerald animate-pulse"></span>
+                            <p className="text-[10px] font-mono text-brand-emerald">UPLINK_SECURE: AES-256-GCM | NODES_SYNCED: 104</p>
+                        </div>
+                    </div>
+                </div>
+                <div className="flex gap-4">
+                    <div className="hidden md:flex flex-col items-end">
+                        <span className="text-[10px] text-gray-500 font-mono">MITIGATION_STATUS</span>
+                        <span className="text-xs text-brand-emerald font-mono">READY // WAITING</span>
+                    </div>
+                    <button 
+                        onClick={onExit}
+                        className="px-6 py-2 border border-red-500/50 text-red-500 font-space text-xs hover:bg-red-500 hover:text-black transition-all tracking-widest uppercase"
+                    >
+                        Disconnect Session
+                    </button>
+                </div>
+            </div>
+
+            <div className="flex-1 grid grid-cols-1 lg:grid-cols-4 gap-6 relative z-10 overflow-hidden">
+                {/* Left Sidebar: Threat Feed & Log */}
+                <div className="lg:col-span-1 flex flex-col gap-6 h-full overflow-hidden">
+                    <div className="flex-1 overflow-hidden">
+                        <ThreatFeed threats={threats} onMitigate={handleMitigate} />
+                    </div>
+                    <div className="h-48 shrink-0">
+                        <SystemLog threats={threats} />
+                    </div>
+                </div>
+
+                {/* Main Content: Globe and Metrics */}
+                <div className="lg:col-span-3 flex flex-col gap-6 overflow-hidden">
+                    {/* Visual Centerpiece */}
+                    <div className="flex-1 glass-panel rounded-xl border border-white/10 relative overflow-hidden bg-brand-dark/40 flex flex-col">
+                        <div className="absolute top-4 left-4 z-20">
+                            <span className="text-[10px] font-orbitron text-brand-accent tracking-[0.2em] uppercase">Tactical_Globe_v9</span>
+                        </div>
+                        
+                        <div className="flex-1 relative cursor-move">
+                            <CommandGlobe threats={threats} />
+                            
+                            {/* HUD Overlays */}
+                            <div className="absolute inset-0 pointer-events-none">
+                                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[80%] aspect-square border border-white/5 rounded-full"></div>
+                                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[60%] aspect-square border border-white/5 rounded-full"></div>
+                                
+                                <motion.div 
+                                    animate={{ rotate: 360 }}
+                                    transition={{ duration: 30, repeat: Infinity, ease: "linear" }}
+                                    className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[90%] aspect-square border-t-2 border-brand-accent/20 rounded-full"
+                                ></motion.div>
+                            </div>
+
+                            {/* Mitigation Log Overlay */}
+                            <div className="absolute top-4 right-4 z-20 w-48 pointer-events-none">
+                                {mitigationLogs.map((log, i) => (
+                                    <motion.div 
+                                        key={i}
+                                        initial={{ opacity: 0, x: 20 }}
+                                        animate={{ opacity: 1, x: 0 }}
+                                        exit={{ opacity: 0 }}
+                                        className="text-[8px] font-mono text-brand-emerald mb-1 text-right bg-black/40 p-1"
+                                    >
+                                        {log}
+                                    </motion.div>
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* Corner Accents */}
+                        <div className="absolute top-1/2 right-4 -translate-y-1/2 font-mono text-[8px] text-gray-600 text-right space-y-2">
+                            <div>LAT: 35.6895<br/>LONG: 139.6917</div>
+                            <div className="text-brand-emerald">STATUS: ACTIVE</div>
+                            <div className="pt-4">
+                                <div className="w-16 h-1 bg-white/10 ml-auto">
+                                    <motion.div animate={{ width: ['0%', '100%', '0%'] }} transition={{ duration: 2, repeat: Infinity }} className="h-full bg-brand-accent"></motion.div>
+                                </div>
+                            </div>
+                        </div>
+                        <div className="absolute bottom-4 left-4 font-mono text-[8px] text-gray-600">
+                            CRYPT_VER: v9.42.0<br/>
+                            PROTOCOL: X-77-NEURAL
+                        </div>
+                    </div>
+
+                    {/* Bottom Metrics */}
+                    <div className="h-fit">
+                        <SystemMetrics />
+                    </div>
+                </div>
+            </div>
+        </motion.div>
+    );
+};
+
 const PlatformPage = () => (
     <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} className="min-h-screen pt-32 pb-20 px-6 relative z-10">
         <div className="max-w-4xl mx-auto glass-panel p-8 md:p-12 rounded-xl border border-white/10">
@@ -336,7 +879,16 @@ const PlatformPage = () => (
                 The Aegis platform is built on a zero-trust foundation, leveraging quantum-resistant cryptography and autonomous AI nodes.
                 It continuously monitors, learns, and adapts to new threat vectors in real-time.
             </p>
-            <div className="space-y-6">
+            
+            <div className="mb-12">
+                <div className="flex justify-between items-center mb-4">
+                    <span className="text-xs font-orbitron text-brand-accent tracking-widest">DECENTRALIZED NODE GRID</span>
+                    <span className="text-[10px] font-mono text-gray-500">NODES_ONLINE: 104</span>
+                </div>
+                <NetworkTopology />
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="p-6 bg-brand-dark/50 border border-white/5 rounded-lg hover:border-brand-accent/50 transition-colors">
                     <h3 className="font-orbitron text-xl text-brand-accent mb-2">Neural Threat Prediction</h3>
                     <p className="font-space text-sm text-gray-500">Analyzes petabytes of telemetry to stop zero-days before they start.</p>
@@ -348,6 +900,10 @@ const PlatformPage = () => (
                 <div className="p-6 bg-brand-dark/50 border border-white/5 rounded-lg hover:border-brand-emerald/50 transition-colors">
                     <h3 className="font-orbitron text-xl text-brand-emerald mb-2">Autonomous Response</h3>
                     <p className="font-space text-sm text-gray-500">Self-healing matrices rewrite firewall rules at machine speed.</p>
+                </div>
+                <div className="p-6 bg-brand-dark/50 border border-white/5 rounded-lg hover:border-brand-accent/50 transition-colors">
+                    <h3 className="font-orbitron text-xl text-white mb-2">Quantum Resilience</h3>
+                    <p className="font-space text-sm text-gray-500">Lattice-based encryption ensures safety against post-quantum compute.</p>
                 </div>
             </div>
         </div>
@@ -600,9 +1156,81 @@ const Features = () => {
 };
 
 // --- Intelligence Section ---
+const IntelligenceGlobe = () => {
+    const mountRef = useRef(null);
+
+    useEffect(() => {
+        const currentMount = mountRef.current;
+        if (!currentMount) return;
+
+        const width = currentMount.clientWidth;
+        const height = currentMount.clientHeight;
+
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+        renderer.setSize(width, height);
+        currentMount.appendChild(renderer.domElement);
+
+        const globeGroup = new THREE.Group();
+        scene.add(globeGroup);
+
+        // Core Sphere
+        const geometry = new THREE.SphereGeometry(2, 32, 32);
+        const material = new THREE.MeshBasicMaterial({
+            color: '#7B2CBF',
+            wireframe: true,
+            transparent: true,
+            opacity: 0.2
+        });
+        const sphere = new THREE.Mesh(geometry, material);
+        globeGroup.add(sphere);
+
+        // Grid overlay
+        const gridGeom = new THREE.SphereGeometry(2.05, 16, 16);
+        const gridMat = new THREE.MeshBasicMaterial({
+            color: '#00F0FF',
+            wireframe: true,
+            transparent: true,
+            opacity: 0.05
+        });
+        const grid = new THREE.Mesh(gridGeom, gridMat);
+        globeGroup.add(grid);
+
+        camera.position.z = 5;
+
+        const animate = () => {
+            requestAnimationFrame(animate);
+            globeGroup.rotation.y += 0.003;
+            renderer.render(scene, camera);
+        };
+        animate();
+
+        const handleResize = () => {
+            const w = currentMount.clientWidth;
+            const h = currentMount.clientHeight;
+            camera.aspect = w / h;
+            camera.updateProjectionMatrix();
+            renderer.setSize(w, h);
+        };
+        window.addEventListener('resize', handleResize);
+
+        return () => {
+            window.removeEventListener('resize', handleResize);
+            if (currentMount.contains(renderer.domElement)) {
+                currentMount.removeChild(renderer.domElement);
+            }
+            scene.clear();
+            renderer.dispose();
+        };
+    }, []);
+
+    return <div ref={mountRef} className="w-full h-full" />;
+};
+
 const Intelligence = () => {
     return (
-        <section id="intelligence" className="relative py-24 px-6 z-10">
+        <section id="intelligence" className="relative py-24 px-6 z-10 bg-black/20">
             <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center gap-12">
                 <motion.div 
                     initial={{ opacity: 0, x: -50 }}
@@ -610,6 +1238,10 @@ const Intelligence = () => {
                     viewport={{ once: true }}
                     className="flex-1"
                 >
+                    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-brand-neon/30 bg-brand-neon/10 w-fit mb-6">
+                        <span className="w-2 h-2 rounded-full bg-brand-neon animate-pulse"></span>
+                        <span className="text-[10px] font-space text-brand-neon tracking-widest uppercase">Telemetry Stream: Active</span>
+                    </div>
                     <h2 className="font-orbitron text-3xl md:text-5xl font-bold text-white mb-6">GLOBAL INTELLIGENCE GRID</h2>
                     <p className="font-space text-gray-400 mb-8 leading-relaxed">
                         Our decentralized network ingests petabytes of global threat telemetry daily. 
@@ -630,13 +1262,38 @@ const Intelligence = () => {
                     initial={{ opacity: 0, scale: 0.9 }}
                     whileInView={{ opacity: 1, scale: 1 }}
                     viewport={{ once: true }}
-                    className="flex-1 w-full aspect-video rounded-xl border border-white/10 glass-panel relative overflow-hidden bg-brand-dark flex items-center justify-center"
+                    className="flex-1 w-full aspect-square md:aspect-video rounded-xl border border-white/10 glass-panel relative overflow-hidden bg-brand-dark/40 flex items-center justify-center group"
                 >
-                     {/* Simplified Map Visualization */}
-                     <div className="absolute inset-0 opacity-20 bg-[url('https://upload.wikimedia.org/wikipedia/commons/8/80/World_map_-_low_resolution.svg')] bg-center bg-no-repeat bg-contain filter invert"></div>
-                     <div className="relative z-10 w-4 h-4 rounded-full bg-brand-accent animate-ping absolute top-1/3 left-1/4"></div>
-                     <div className="relative z-10 w-3 h-3 rounded-full bg-red-500 animate-ping absolute top-1/2 left-2/3"></div>
-                     <div className="relative z-10 w-2 h-2 rounded-full bg-brand-emerald animate-ping absolute bottom-1/3 right-1/4"></div>
+                    <div className="absolute inset-0 bg-radial-gradient opacity-30"></div>
+                    <div className="absolute inset-0 z-0">
+                        <IntelligenceGlobe />
+                    </div>
+                    
+                    {/* Animated Data Points */}
+                    <div className="absolute inset-0 z-10 pointer-events-none">
+                        {[...Array(6)].map((_, i) => (
+                            <motion.div
+                                key={i}
+                                className="absolute w-1 h-1 bg-brand-accent rounded-full"
+                                initial={{ opacity: 0 }}
+                                animate={{ 
+                                    opacity: [0, 1, 0],
+                                    scale: [1, 2, 1],
+                                    x: [Math.random() * 100 + '%', Math.random() * 100 + '%'],
+                                    y: [Math.random() * 100 + '%', Math.random() * 100 + '%']
+                                }}
+                                transition={{ 
+                                    duration: Math.random() * 3 + 2, 
+                                    repeat: Infinity,
+                                    delay: i * 0.5
+                                }}
+                            />
+                        ))}
+                    </div>
+
+                    <div className="absolute bottom-4 right-4 z-20 font-mono text-[8px] text-brand-accent/50 group-hover:text-brand-accent transition-colors">
+                        SECURE_UPLINK_ESTABLISHED // NODE_77
+                    </div>
                 </motion.div>
             </div>
         </section>
@@ -718,26 +1375,42 @@ const Footer = ({ onViewChange }) => {
 
 // --- Main App Component ---
 const App = () => {
+    const [isBooting, setIsBooting] = useState(true);
     const [toast, setToast] = useState(null);
     const [currentView, setCurrentView] = useState('home');
 
+    if (isBooting) {
+        return <BootSequence onComplete={() => setIsBooting(false)} />;
+    }
+
     const handleInitializeSys = async () => {
+        playSound('click');
         try {
             const res = await fetch('/api/status');
             const data = await res.json();
             setToast({ message: `System Check: ${data.message}`, type: 'success' });
-            playSound('success');
+            setTimeout(() => {
+                setCurrentView('command');
+                playSound('success');
+            }, 1000);
         } catch (err) {
             setToast({ message: 'Error: Cannot reach backend server.', type: 'error' });
-            playSound('click');
         }
     };
 
     const renderView = () => {
+        const viewVariants = {
+            initial: { opacity: 0, scale: 0.98, filter: 'blur(10px)' },
+            animate: { opacity: 1, scale: 1, filter: 'blur(0px)' },
+            exit: { opacity: 0, scale: 1.02, filter: 'blur(10px)' }
+        };
+
+        const transition = { duration: 0.6, ease: [0.22, 1, 0.36, 1] };
+
         switch(currentView) {
             case 'home':
                 return (
-                    <motion.div key="home" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.5 }}>
+                    <motion.div key="home" variants={viewVariants} initial="initial" animate="animate" exit="exit" transition={transition}>
                         <main>
                             <Hero onDeployClick={() => setCurrentView('deploy')} onViewChange={setCurrentView} />
                             <Features />
@@ -749,29 +1422,35 @@ const App = () => {
                 );
             case 'deploy':
                 return (
-                    <motion.div key="deploy" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.5 }}>
+                    <motion.div key="deploy" variants={viewVariants} initial="initial" animate="animate" exit="exit" transition={transition}>
                         <DeploymentPage onComplete={() => setCurrentView('home')} />
                     </motion.div>
                 );
             case 'platform':
                 return (
-                    <motion.div key="platform" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.5 }}>
+                    <motion.div key="platform" variants={viewVariants} initial="initial" animate="animate" exit="exit" transition={transition}>
                         <PlatformPage />
                         <Footer onViewChange={setCurrentView} />
                     </motion.div>
                 );
             case 'company':
                 return (
-                    <motion.div key="company" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.5 }}>
+                    <motion.div key="company" variants={viewVariants} initial="initial" animate="animate" exit="exit" transition={transition}>
                         <CompanyPage />
                         <Footer onViewChange={setCurrentView} />
                     </motion.div>
                 );
             case 'contact':
                 return (
-                    <motion.div key="contact" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.5 }}>
+                    <motion.div key="contact" variants={viewVariants} initial="initial" animate="animate" exit="exit" transition={transition}>
                         <ContactPage />
                         <Footer onViewChange={setCurrentView} />
+                    </motion.div>
+                );
+            case 'command':
+                return (
+                    <motion.div key="command" initial={{ opacity: 0, clipPath: 'inset(50% 0 50% 0)' }} animate={{ opacity: 1, clipPath: 'inset(0% 0 0% 0)' }} exit={{ opacity: 0, clipPath: 'inset(50% 0 50% 0)' }} transition={{ duration: 0.8, ease: "circOut" }}>
+                        <CommandCenter onExit={() => setCurrentView('home')} />
                     </motion.div>
                 );
             default:
