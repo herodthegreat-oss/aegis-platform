@@ -234,6 +234,99 @@ const BootSequence = ({ onComplete }) => {
     );
 };
 
+// --- System Initialization Sequence ---
+const SystemInitialization = ({ onComplete }) => {
+    const [progress, setProgress] = useState(0);
+    const [status, setStatus] = useState("SYNCHRONIZING_NEURAL_UPLINK...");
+    const [logs, setLogs] = useState([]);
+
+    const steps = [
+        { p: 15, s: "AUTHENTICATING_QUANTUM_KEYS...", l: "RSA-4096 / LATTICE_SECURE" },
+        { p: 30, s: "PROVISIONING_ISOLATED_CONTAINERS...", l: "DOCKER_GRID_77 // ACTIVE" },
+        { p: 50, s: "DECRYPTING_THREAT_DATABASE...", l: "AES-256-GCM_DECODED" },
+        { p: 70, s: "ESTABLISHING_NEURAL_MATRIX...", l: "NODE_ALPHA_SYNC: 98.4%" },
+        { p: 90, s: "ARMING_DEFENSE_SYSTEMS...", l: "FIREWALL_V9_ONLINE" },
+        { p: 100, s: "SYSTEM_READY", l: "UPLINK_STABLE" }
+    ];
+
+    useEffect(() => {
+        let currentStep = 0;
+        const interval = setInterval(() => {
+            if (currentStep < steps.length) {
+                const step = steps[currentStep];
+                setProgress(step.p);
+                setStatus(step.s);
+                setLogs(prev => [...prev, `[LOG] ${step.l}`]);
+                playSound('hover');
+                currentStep++;
+            } else {
+                clearInterval(interval);
+                setTimeout(onComplete, 800);
+            }
+        }, 600);
+        return () => clearInterval(interval);
+    }, [onComplete]);
+
+    return (
+        <div className="fixed inset-0 z-[200] bg-brand-black flex items-center justify-center p-8 overflow-hidden">
+            <div className="absolute inset-0 cyber-grid opacity-10"></div>
+            <div className="absolute inset-0 bg-radial-gradient opacity-20"></div>
+            
+            <div className="max-w-2xl w-full relative z-10">
+                <div className="mb-12 flex items-center justify-between">
+                    <div>
+                        <h2 className="font-orbitron text-brand-accent text-3xl font-black tracking-[0.4em] mb-2">INITIALIZING</h2>
+                        <div className="flex items-center gap-2">
+                            <div className="w-2 h-2 rounded-full bg-brand-accent animate-pulse"></div>
+                            <p className="font-mono text-[10px] text-gray-500 uppercase tracking-widest">{status}</p>
+                        </div>
+                    </div>
+                    <div className="font-orbitron text-4xl text-white opacity-20">{progress}%</div>
+                </div>
+
+                <div className="relative h-2 w-full bg-white/5 rounded-full overflow-hidden mb-8 shadow-[0_0_20px_rgba(0,0,0,0.5)]">
+                    <motion.div 
+                        initial={{ width: 0 }}
+                        animate={{ width: `${progress}%` }}
+                        className="h-full bg-gradient-to-right from-brand-neon to-brand-accent shadow-[0_0_15px_#00F0FF]"
+                    />
+                    <div className="absolute inset-0 animate-scan opacity-30"></div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4 h-48">
+                    <div className="glass-panel p-4 rounded border border-white/5 font-mono text-[8px] text-brand-emerald space-y-1 overflow-y-auto custom-scrollbar">
+                        {logs.map((log, i) => (
+                            <div key={i} className="flex gap-2">
+                                <span className="opacity-40">[{new Date().toLocaleTimeString()}]</span>
+                                <span>{log}</span>
+                            </div>
+                        ))}
+                        <span className="terminal-cursor !h-2 !w-1"></span>
+                    </div>
+                    <div className="glass-panel p-4 rounded border border-white/5 flex flex-col justify-center items-center gap-4">
+                        <div className="relative w-16 h-16">
+                            <svg className="w-full h-full transform -rotate-90">
+                                <circle cx="32" cy="32" r="30" stroke="currentColor" strokeWidth="2" fill="transparent" className="text-white/5" />
+                                <motion.circle 
+                                    cx="32" cy="32" r="30" 
+                                    stroke="currentColor" strokeWidth="2" fill="transparent" 
+                                    className="text-brand-accent"
+                                    strokeDasharray="188.4"
+                                    animate={{ strokeDashoffset: 188.4 - (188.4 * progress) / 100 }}
+                                />
+                            </svg>
+                            <div className="absolute inset-0 flex items-center justify-center">
+                                <span className="text-[10px] font-orbitron text-white">{progress}%</span>
+                            </div>
+                        </div>
+                        <span className="text-[8px] font-space text-gray-500 tracking-widest uppercase">Encryption_Sync</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+};
+
 // --- Network Topology Component ---
 const NetworkTopology = () => {
     const nodes = [
@@ -1129,6 +1222,25 @@ const CommandCenter = ({ onExit }) => {
 
             <SecurityOverview securityLevel={securityLevel} />
 
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6 relative z-10">
+                <div className="glass-panel p-4 rounded border border-white/5 flex flex-col">
+                    <span className="text-[8px] font-orbitron text-gray-500 uppercase tracking-widest mb-1">Quantum_Entropy</span>
+                    <div className="text-lg font-orbitron text-white">0.00042 <span className="text-[8px] text-brand-accent">λ</span></div>
+                </div>
+                <div className="glass-panel p-4 rounded border border-white/5 flex flex-col">
+                    <span className="text-[8px] font-orbitron text-gray-500 uppercase tracking-widest mb-1">Active_Neural_Nodes</span>
+                    <div className="text-lg font-orbitron text-white">1,024 <span className="text-[8px] text-brand-emerald">SYNC</span></div>
+                </div>
+                <div className="glass-panel p-4 rounded border border-white/5 flex flex-col">
+                    <span className="text-[8px] font-orbitron text-gray-500 uppercase tracking-widest mb-1">Blocked_Packets_24h</span>
+                    <div className="text-lg font-orbitron text-white">1.49M <span className="text-[8px] text-red-500">+12%</span></div>
+                </div>
+                <div className="glass-panel p-4 rounded border border-white/5 flex flex-col">
+                    <span className="text-[8px] font-orbitron text-gray-500 uppercase tracking-widest mb-1">Uptime_Metric</span>
+                    <div className="text-lg font-orbitron text-white">99.9994% <span className="text-[8px] text-brand-neon">MAX</span></div>
+                </div>
+            </div>
+
             <div className="flex-1 grid grid-cols-1 lg:grid-cols-12 gap-6 relative z-10 overflow-hidden">
                 {/* Left Sidebar: Threat Feed & Log */}
                 <div className="lg:col-span-3 flex flex-col gap-6 h-full overflow-hidden">
@@ -1639,6 +1751,125 @@ const Defense = ({ onDeployClick }) => {
     );
 };
 
+// --- Auth Page Component ---
+const AuthPage = ({ onAuthSuccess }) => {
+    const [isLogin, setIsLogin] = useState(true);
+    const [loading, setLoading] = useState(false);
+    const [formData, setFormData] = useState({ email: '', password: '', company: '' });
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        setLoading(true);
+        playSound('click');
+        
+        // Simulate "Neural Scan"
+        await new Promise(r => setTimeout(r, 2000));
+        
+        playSound('success');
+        onAuthSuccess();
+    };
+
+    return (
+        <div className="min-h-screen flex items-center justify-center p-6 relative overflow-hidden bg-brand-black">
+            <div className="absolute inset-0 cyber-grid opacity-20"></div>
+            <div className="absolute inset-0 bg-radial-gradient opacity-30"></div>
+            
+            <motion.div 
+                initial={{ opacity: 0, y: 20, scale: 0.95 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                className="w-full max-w-md relative z-10"
+            >
+                <div className="glass-panel p-8 rounded-2xl border border-white/10 relative overflow-hidden group">
+                    {loading && (
+                        <div className="absolute inset-0 z-50 bg-brand-black/60 backdrop-blur-sm flex flex-col items-center justify-center">
+                            <div className="w-48 h-1 bg-white/10 rounded-full overflow-hidden relative mb-4">
+                                <motion.div 
+                                    animate={{ x: ['-100%', '100%'] }}
+                                    transition={{ duration: 1.5, repeat: Infinity, ease: "linear" }}
+                                    className="absolute inset-0 bg-brand-accent shadow-[0_0_15px_#00F0FF]"
+                                />
+                            </div>
+                            <span className="font-orbitron text-brand-accent text-[10px] tracking-[0.3em] animate-pulse">SCANNIN_IDENTITY...</span>
+                        </div>
+                    )}
+
+                    <div className="flex flex-col items-center mb-8">
+                        <div className="w-16 h-16 rounded-xl bg-brand-accent/10 border border-brand-accent flex items-center justify-center mb-4 shadow-[0_0_20px_rgba(0,240,255,0.2)]">
+                            <svg className="w-8 h-8 text-brand-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                            </svg>
+                        </div>
+                        <h2 className="font-orbitron text-2xl font-black text-white tracking-widest text-center">
+                            AEGIS_<span className="text-brand-accent">{isLogin ? 'ACCESS' : 'PROVISION'}</span>
+                        </h2>
+                        <p className="font-space text-gray-500 text-[10px] mt-2 tracking-[0.2em] uppercase">Protocol_v9.42 // Secure_Uplink</p>
+                    </div>
+
+                    <form onSubmit={handleSubmit} className="space-y-6">
+                        {!isLogin && (
+                            <div className="space-y-2">
+                                <label className="block text-[10px] font-orbitron text-gray-500 tracking-widest uppercase">Organization_ID</label>
+                                <input 
+                                    type="text" 
+                                    required
+                                    className="w-full bg-white/5 border border-white/10 rounded px-4 py-3 text-white font-space text-sm focus:outline-none focus:border-brand-accent transition-all"
+                                    placeholder="ENTER_ORG_CODE"
+                                    value={formData.company}
+                                    onChange={e => setFormData({...formData, company: e.target.value})}
+                                />
+                            </div>
+                        )}
+                        <div className="space-y-2">
+                            <label className="block text-[10px] font-orbitron text-gray-500 tracking-widest uppercase">Admin_Identifier</label>
+                            <input 
+                                type="email" 
+                                required
+                                className="w-full bg-white/5 border border-white/10 rounded px-4 py-3 text-white font-space text-sm focus:outline-none focus:border-brand-accent transition-all"
+                                placeholder="name@aegis.system"
+                                value={formData.email}
+                                onChange={e => setFormData({...formData, email: e.target.value})}
+                            />
+                        </div>
+                        <div className="space-y-2">
+                            <label className="block text-[10px] font-orbitron text-gray-500 tracking-widest uppercase">Neural_Passkey</label>
+                            <input 
+                                type="password" 
+                                required
+                                className="w-full bg-white/5 border border-white/10 rounded px-4 py-3 text-white font-space text-sm focus:outline-none focus:border-brand-accent transition-all"
+                                placeholder="••••••••"
+                                value={formData.password}
+                                onChange={e => setFormData({...formData, password: e.target.value})}
+                            />
+                        </div>
+
+                        <button 
+                            type="submit" 
+                            className="w-full py-4 bg-brand-accent text-black font-black font-orbitron tracking-[0.2em] text-xs hover:bg-white transition-all shadow-[0_0_20px_rgba(0,240,255,0.3)] relative overflow-hidden group/btn"
+                        >
+                            <div className="absolute inset-0 bg-white/20 transform -translate-x-full group-hover/btn:animate-[scan_1.5s_linear_infinite]"></div>
+                            <span className="relative z-10">{isLogin ? 'INITIATE_SESSION' : 'REGISTER_ENDPOINT'}</span>
+                        </button>
+                    </form>
+
+                    <div className="mt-8 pt-6 border-t border-white/5 flex flex-col gap-4 items-center">
+                        <button 
+                            onClick={() => { setIsLogin(!isLogin); playSound('hover'); }}
+                            className="text-[10px] font-space text-gray-500 hover:text-brand-accent transition-colors tracking-widest uppercase"
+                        >
+                            {isLogin ? "Generate_New_Credentials" : "Return_to_Access_Portal"}
+                        </button>
+                        <div className="flex gap-4">
+                            <div className="w-1.5 h-1.5 rounded-full bg-brand-emerald animate-pulse"></div>
+                            <div className="w-1.5 h-1.5 rounded-full bg-brand-accent animate-pulse" style={{ animationDelay: '0.5s' }}></div>
+                            <div className="w-1.5 h-1.5 rounded-full bg-brand-neon animate-pulse" style={{ animationDelay: '1s' }}></div>
+                        </div>
+                    </div>
+                </div>
+            </motion.div>
+        </div>
+    );
+};
+
 // --- Footer Component ---
 const Footer = ({ onViewChange }) => {
     const handleNav = (view) => {
@@ -1695,11 +1926,17 @@ const Footer = ({ onViewChange }) => {
 // --- Main App Component ---
 const App = () => {
     const [isBooting, setIsBooting] = useState(true);
+    const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [toast, setToast] = useState(null);
     const [currentView, setCurrentView] = useState('home');
+    const [isInitializing, setIsInitializing] = useState(false);
 
     if (isBooting) {
         return <BootSequence onComplete={() => setIsBooting(false)} />;
+    }
+
+    if (!isAuthenticated) {
+        return <AuthPage onAuthSuccess={() => setIsAuthenticated(true)} />;
     }
 
     const handleInitializeSys = async () => {
@@ -1711,18 +1948,11 @@ const App = () => {
             if (res && res.ok) {
                 const data = await res.json();
                 setTimeout(() => setToast({ message: `System Check: ${data.message}`, type: 'success' }), 500);
-            } else {
-                setTimeout(() => setToast({ message: 'Uplink Offline: Engaging Simulated Environment', type: 'success' }), 500);
             }
-        } catch (err) {
-            setTimeout(() => setToast({ message: 'Initializing Local Neural Matrix...', type: 'success' }), 500);
-        }
+        } catch (err) {}
         
-        // Extended delay for cinematic effect
-        setTimeout(() => {
-            setCurrentView('command');
-            playSound('success');
-        }, 1500);
+        // Trigger cinematic initialization
+        setIsInitializing(true);
     };
 
     const renderView = () => {
@@ -1776,7 +2006,7 @@ const App = () => {
                 );
             case 'command':
                 return (
-                    <motion.div key="command" initial={{ opacity: 0, clipPath: 'inset(50% 0 50% 0)' }} animate={{ opacity: 1, clipPath: 'inset(0% 0 0% 0)' }} exit={{ opacity: 0, clipPath: 'inset(50% 0 50% 0)' }} transition={{ duration: 0.8, ease: "circOut" }}>
+                    <motion.div key="command" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
                         <CommandCenter onExit={() => setCurrentView('home')} />
                     </motion.div>
                 );
@@ -1795,7 +2025,13 @@ const App = () => {
             />
             
             <AnimatePresence mode="wait">
-                {renderView()}
+                {isInitializing ? (
+                    <SystemInitialization key="init" onComplete={() => {
+                        setIsInitializing(false);
+                        setCurrentView('command');
+                        playSound('success');
+                    }} />
+                ) : renderView()}
             </AnimatePresence>
 
             <AnimatePresence>
