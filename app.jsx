@@ -416,7 +416,7 @@ const MainContent = () => {
 
     useEffect(() => { if (!authLoading) setTimeout(() => setBoot(false), 2000); }, [authLoading]);
 
-    if (authLoading || boot) return <BootSequence onComplete={() => {}} />;
+    if (authLoading || boot) return <BootSequence onComplete={() => setBoot(false)} />;
     if (!user) return <AuthPage />;
 
     const renderView = () => {
