@@ -2,12 +2,16 @@ import os
 import datetime
 import jwt
 import random
+import mimetypes
 from functools import wraps
 from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
 from flask_sqlalchemy import SQLAlchemy
 from passlib.hash import pbkdf2_sha256
 from dotenv import load_dotenv
+
+# Add MIME type for JSX
+mimetypes.add_type('application/javascript', '.jsx')
 
 load_dotenv()
 
