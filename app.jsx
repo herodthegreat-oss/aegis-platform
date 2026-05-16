@@ -1,6 +1,16 @@
 // Aegis Production - High-Fidelity Futuristic UI
 const { useState, useEffect, useRef, createContext, useContext } = React;
-const { motion, AnimatePresence, useScroll, useTransform } = window.Motion || window.framerMotion || { motion: { div: (props) => <div {...props}>{props.children}</div>, section: (props) => <section {...props}>{props.children}</div>, nav: (props) => <nav {...props}>{props.children}</div>, h1: (props) => <h1 {...props}>{props.children}</h1>, p: (props) => <p {...props}>{props.children} p></p>, button: (props) => <button {...props}>{props.children}</button> }, AnimatePresence: ({children}) => children };
+const Framer = window.Motion || window.framerMotion || {};
+const motion = Framer.motion || { 
+    div: (props) => <div {...props}>{props.children}</div>,
+    section: (props) => <section {...props}>{props.children}</section>,
+    nav: (props) => <nav {...props}>{props.children}</nav>,
+    h1: (props) => <h1 {...props}>{props.children}</h1>,
+    p: (props) => <p {...props}>{props.children}</p>,
+    button: (props) => <button {...props}>{props.children}</button>,
+    span: (props) => <span {...props}>{props.children}</span>
+};
+const AnimatePresence = Framer.AnimatePresence || (({children}) => children);
 
 // --- AUDIO SYSTEM ---
 const playSound = (type) => {
