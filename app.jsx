@@ -209,9 +209,11 @@ const AuthPage = () => {
     
     const submit = async (e) => {
         e.preventDefault(); setLoading(true); setErr(''); playSound('click');
-        const res = isLogin ? await login(form.email, form.pass) : await register(form.email, form.pass, form.org);
-        if (res.success) { if (!isLogin) setIsLogin(true); playSound('success'); }
-        else setErr(res.message);
+        try {
+            const res = isLogin ? await login(form.email, form.pass) : await register(form.email, form.pass, form.org);
+            if (res.success) { if (!isLogin) setIsLogin(true); playSound('success'); }
+            else setErr(res.message);
+        } catch(e) { setErr("UPLINK_FAILURE"); }
         setLoading(false);
     };
 
@@ -219,25 +221,70 @@ const AuthPage = () => {
         <div className="min-h-screen flex items-center justify-center p-6 bg-brand-black relative overflow-hidden">
             <CyberBackground />
             <div className="absolute inset-0 cyber-grid opacity-20"></div>
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="w-full max-w-md relative z-10">
-                <div className="glass-panel p-10 rounded-3xl border border-white/10 backdrop-blur-3xl relative overflow-hidden">
-                    {loading && <div className="absolute inset-0 bg-brand-black/60 z-50 flex items-center justify-center font-orbitron text-[10px] text-brand-accent animate-pulse tracking-widest">VERIFYING_IDENTITY...</div>}
-                    <div className="flex flex-col items-center mb-10">
-                        <div className="w-16 h-16 rounded-2xl bg-brand-accent/10 border border-brand-accent flex items-center justify-center mb-6 shadow-[0_0_20px_rgba(0,240,255,0.2)]">
-                            <svg className="w-8 h-8 text-brand-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
+            <div className="absolute inset-0 bg-radial-gradient opacity-40"></div>
+            
+            <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="w-full max-w-md relative z-10">
+                <div className="glass-panel-heavy p-10 rounded-[2rem] border border-white/10 relative overflow-hidden">
+                    <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-brand-accent to-transparent animate-pulse-glow"></div>
+                    
+                    {loading && (
+                        <div className="absolute inset-0 bg-brand-black/80 z-50 flex flex-col items-center justify-center backdrop-blur-md">
+                            <div className="w-12 h-12 border-2 border-brand-accent border-t-transparent rounded-full animate-spin mb-4"></div>
+                            <span className="font-orbitron text-[10px] text-brand-accent tracking-[0.5em] animate-pulse">VERIFYING_IDENT_PROTOCOL</span>
                         </div>
-                        <h2 className="font-orbitron text-2xl font-black text-white tracking-[0.3em] text-center">AEGIS_<span className="text-brand-accent">{isLogin ? 'ACCESS' : 'PROVISION'}</span></h2>
+                    )}
+
+                    <div className="flex flex-col items-center mb-12">
+                        <motion.div 
+                            animate={{ rotateY: 360 }} 
+                            transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
+                            className="w-20 h-20 rounded-3xl bg-brand-accent/5 border border-brand-accent/30 flex items-center justify-center mb-6 shadow-[0_0_30px_rgba(0,240,255,0.1)]"
+                        >
+                            <svg className="w-10 h-10 text-brand-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                            </svg>
+                        </motion.div>
+                        <h2 className="font-orbitron text-3xl font-black text-white tracking-[0.4em] text-center text-glow">AEGIS_<span className="text-brand-accent">{isLogin ? 'AUTH' : 'PROVISION'}</span></h2>
+                        <div className="h-0.5 w-12 bg-brand-accent mt-4"></div>
                     </div>
+
                     <form onSubmit={submit} className="space-y-6">
-                        {err && <div className="p-3 bg-red-500/10 border border-red-500/30 text-red-500 text-[10px] font-mono text-center uppercase tracking-widest">{err}</div>}
-                        {!isLogin && <input className="w-full bg-white/5 border border-white/10 p-4 text-white font-space text-sm focus:border-brand-accent outline-none" placeholder="ORGANIZATION_CODE" value={form.org} onChange={e=>setForm({...form, org:e.target.value})} required />}
-                        <input className="w-full bg-white/5 border border-white/10 p-4 text-white font-space text-sm focus:border-brand-accent outline-none" type="email" placeholder="ADMIN_IDENTIFIER" value={form.email} onChange={e=>setForm({...form, email:e.target.value})} required />
-                        <input className="w-full bg-white/5 border border-white/10 p-4 text-white font-space text-sm focus:border-brand-accent outline-none" type="password" placeholder="NEURAL_PASSKEY" value={form.pass} onChange={e=>setForm({...form, pass:e.target.value})} required />
-                        <button type="submit" className="w-full py-5 bg-brand-accent text-black font-black font-orbitron tracking-[0.3em] hover:bg-white transition-all shadow-[0_0_20px_rgba(0,240,255,0.3)]">{isLogin ? 'INITIATE_SESSION' : 'REGISTER_ENDPOINT'}</button>
+                        {err && (
+                            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="p-4 bg-red-500/10 border border-red-500/30 text-red-500 text-[9px] font-mono text-center uppercase tracking-[0.2em]">
+                                ERROR_CODE: {err} // ACCESS_DENIED
+                            </motion.div>
+                        )}
+                        
+                        <div className="space-y-4">
+                            {!isLogin && (
+                                <div className="relative group">
+                                    <input className="w-full bg-black/40 border border-white/10 p-4 pl-12 text-white font-space text-sm focus:border-brand-accent outline-none transition-all placeholder:text-gray-600" placeholder="ORGANIZATION_CODE" value={form.org} onChange={e=>setForm({...form, org:e.target.value})} required />
+                                    <svg className="w-5 h-5 absolute left-4 top-1/2 -translate-y-1/2 text-gray-600 group-focus-within:text-brand-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" /></svg>
+                                </div>
+                            )}
+                            
+                            <div className="relative group">
+                                <input className="w-full bg-black/40 border border-white/10 p-4 pl-12 text-white font-space text-sm focus:border-brand-accent outline-none transition-all placeholder:text-gray-600" type="email" placeholder="ADMIN_IDENTIFIER" value={form.email} onChange={e=>setForm({...form, email:e.target.value})} required />
+                                <svg className="w-5 h-5 absolute left-4 top-1/2 -translate-y-1/2 text-gray-600 group-focus-within:text-brand-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
+                            </div>
+
+                            <div className="relative group">
+                                <input className="w-full bg-black/40 border border-white/10 p-4 pl-12 text-white font-space text-sm focus:border-brand-accent outline-none transition-all placeholder:text-gray-600" type="password" placeholder="NEURAL_PASSKEY" value={form.pass} onChange={e=>setForm({...form, pass:e.target.value})} required />
+                                <svg className="w-5 h-5 absolute left-4 top-1/2 -translate-y-1/2 text-gray-600 group-focus-within:text-brand-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
+                            </div>
+                        </div>
+
+                        <button type="submit" className="w-full py-5 bg-brand-accent text-black font-black font-orbitron tracking-[0.4em] hover:bg-white transition-all shadow-[0_0_40px_rgba(0,240,255,0.2)] hover:shadow-[0_0_60px_rgba(0,240,255,0.4)] uppercase">
+                            {isLogin ? 'INITIATE_SESSION' : 'PROVISION_ENDPOINT'}
+                        </button>
                     </form>
-                    <button onClick={()=>setIsLogin(!isLogin)} className="w-full mt-10 text-[10px] font-orbitron text-gray-500 hover:text-brand-accent uppercase tracking-widest transition-colors">{isLogin ? 'Generate_New_Credentials' : 'Return_to_Portal'}</button>
+
+                    <button onClick={()=>setIsLogin(!isLogin)} className="w-full mt-10 text-[9px] font-orbitron text-gray-500 hover:text-brand-accent uppercase tracking-[0.3em] transition-colors border-t border-white/5 pt-8">
+                        {isLogin ? '// REQUEST_NEW_CREDENTIALS' : '// RETURN_TO_SECURE_PORTAL'}
+                    </button>
                 </div>
             </motion.div>
+            <div className="fixed bottom-8 left-1/2 -translate-x-1/2 font-mono text-[8px] text-gray-700 tracking-[1em] uppercase">Security Level: Maximum // Quantum Resistant</div>
         </div>
     );
 };
