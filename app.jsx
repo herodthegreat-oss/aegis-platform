@@ -120,7 +120,7 @@ const BootSequence = ({ onComplete }) => {
                 <div className="absolute top-0 left-0 w-full h-1 bg-brand-accent/20 overflow-hidden">
                     <motion.div animate={{ x: ['-100%', '100%'] }} transition={{ duration: 2, repeat: Infinity }} className="h-full bg-brand-accent shadow-[0_0_15px_#00F0FF]" />
                 </div>
-                {lines.map((l, i) => <div key={i} className="mb-2 tracking-widest">> {l}</div>)}
+                {lines.map((l, i) => <div key={i} className="mb-2 tracking-widest"> {l}</div>)}
                 <div className="mt-8 flex justify-between items-end">
                     <span className="text-[8px] opacity-50 uppercase">Neural Link Established</span>
                     <span className="text-2xl font-orbitron text-brand-accent">{Math.min(100, Math.floor((idx/bootLines.length)*100))}%</span>
