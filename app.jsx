@@ -13,6 +13,65 @@ const CITY_COORDS = {
     'Global': { lat: 0, lng: 0 }
 };
 
+// --- Protocol Data ---
+const PROTOCOL_DATA = {
+    'threat-intel': {
+        title: 'THREAT INTELLIGENCE MATRIX',
+        subtitle: 'Global Telemetry & Predictive Analysis',
+        icon: 'M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z',
+        color: 'brand-accent',
+        description: 'The Aegis Threat Intelligence Matrix ingests real-time telemetry from over 10 million nodes worldwide. Using quantum-accelerated neural networks, we identify emerging attack vectors before they reach your perimeter.',
+        metrics: [
+            { label: 'Active Feeds', value: '1,422' },
+            { label: 'Detection Rate', value: '99.98%' },
+            { label: 'Processing Speed', value: '0.2ms' }
+        ],
+        features: [
+            'Real-time CVE Mapping',
+            'Predictive Behavioral Analysis',
+            'Decentralized Reputation Scoring',
+            'Zero-Day Vulnerability Scanning'
+        ]
+    },
+    'cloud-security': {
+        title: 'CLOUD ARMOR PROTOCOL',
+        subtitle: 'Zero-Trust Multi-Cloud Defense',
+        icon: 'M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z',
+        color: 'brand-neon',
+        description: 'Cloud Armor provides deep visibility and autonomous protection across hybrid and multi-cloud environments. We secure your containers, serverless functions, and data stores with micro-segmentation.',
+        metrics: [
+            { label: 'Cloud Nodes', value: '842,000' },
+            { label: 'Isolation Time', value: '<1s' },
+            { label: 'Encrypted Traffic', value: '100%' }
+        ],
+        features: [
+            'Container Hardening (K8s)',
+            'Serverless Runtime Protection',
+            'IAM Anomaly Detection',
+            'Automated Compliance Auditing'
+        ]
+    },
+    'endpoint-defense': {
+        title: 'ENDPOINT SENTINEL',
+        subtitle: 'Autonomous Device Protection',
+        icon: 'M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z',
+        color: 'brand-emerald',
+        description: 'Endpoint Sentinel deploys lightweight, autonomous agents that monitor device behavior in real-time. Even when offline, our EDR agents can identify and block ransomware execution using on-device ML.',
+        metrics: [
+            { label: 'Secured Devices', value: '4.8M' },
+            { label: 'Mean Time to React', value: '12ms' },
+            { label: 'False Positives', value: '0.001%' }
+        ],
+        features: [
+            'Ransomware Rollback System',
+            'Memory Exploitation Shield',
+            'Behavioral Anti-Malware',
+            'Offline Threat Mitigation'
+        ]
+    }
+};
+
+
 const getCoords = (location) => CITY_COORDS[location] || { lat: (Math.random() - 0.5) * 160, lng: (Math.random() - 0.5) * 320 };
 
 // --- Audio System ---
@@ -1870,12 +1929,123 @@ const AuthPage = ({ onAuthSuccess }) => {
     );
 };
 
+// --- Protocol Detail Component ---
+const ProtocolDetail = ({ protocolId, onClose }) => {
+    const data = PROTOCOL_DATA[protocolId];
+    if (!data) return null;
+
+    const accentColor = data.color === 'brand-accent' ? '#00F0FF' : 
+                       data.color === 'brand-neon' ? '#7B2CBF' : '#00FF9D';
+
+    return (
+        <motion.div 
+            initial={{ opacity: 0 }} 
+            animate={{ opacity: 1 }} 
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[150] flex items-center justify-center p-6 bg-brand-black/90 backdrop-blur-xl"
+            onClick={onClose}
+        >
+            <motion.div 
+                initial={{ scale: 0.9, y: 20, opacity: 0 }}
+                animate={{ scale: 1, y: 0, opacity: 1 }}
+                exit={{ scale: 0.9, y: 20, opacity: 0 }}
+                className="max-w-3xl w-full glass-panel p-8 md:p-12 rounded-2xl border border-white/10 relative overflow-hidden shadow-[0_0_50px_rgba(0,0,0,0.5)]"
+                onClick={e => e.stopPropagation()}
+            >
+                {/* Background Decor */}
+                <div className="absolute -top-24 -right-24 w-64 h-64 blur-3xl rounded-full opacity-20" style={{ backgroundColor: accentColor }}></div>
+                <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-right from-transparent via-white/20 to-transparent"></div>
+                
+                <button 
+                    onClick={onClose}
+                    className="absolute top-6 right-6 text-gray-500 hover:text-white transition-colors z-20 group"
+                >
+                    <svg className="w-6 h-6 group-hover:rotate-90 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+
+                <div className="flex flex-col md:flex-row gap-10 items-start relative z-10">
+                    <div className="w-24 h-24 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center shrink-0 relative group">
+                        <div className="absolute inset-0 rounded-2xl animate-pulse opacity-20" style={{ backgroundColor: accentColor }}></div>
+                        <svg className="w-12 h-12 relative z-10" style={{ color: accentColor }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d={data.icon} />
+                        </svg>
+                    </div>
+                    
+                    <div className="flex-1">
+                        <div className="mb-6">
+                            <span className="text-[10px] font-orbitron tracking-[0.4em] uppercase mb-2 block opacity-60" style={{ color: accentColor }}>{data.subtitle}</span>
+                            <h2 className="font-orbitron text-3xl md:text-5xl text-white font-black tracking-tight leading-none">{data.title}</h2>
+                        </div>
+                        
+                        <p className="font-space text-gray-400 leading-relaxed mb-10 text-sm md:text-lg border-l-2 border-white/5 pl-6">
+                            {data.description}
+                        </p>
+
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+                            {data.metrics.map((m, i) => (
+                                <motion.div 
+                                    key={i} 
+                                    initial={{ opacity: 0, y: 10 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    transition={{ delay: 0.2 + i * 0.1 }}
+                                    className="p-5 bg-white/5 border border-white/5 rounded-xl hover:border-white/10 transition-colors"
+                                >
+                                    <span className="text-[9px] font-space text-gray-500 uppercase tracking-[0.2em] block mb-2">{m.label}</span>
+                                    <span className="text-2xl font-orbitron text-white font-bold">{m.value}</span>
+                                </motion.div>
+                            ))}
+                        </div>
+
+                        <div className="space-y-4">
+                            <h4 className="text-[10px] font-orbitron text-gray-500 tracking-[0.3em] uppercase flex items-center gap-4">
+                                <span>Core_Capabilities</span>
+                                <div className="h-[1px] flex-1 bg-white/5"></div>
+                            </h4>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-10 gap-y-4">
+                                {data.features.map((f, i) => (
+                                    <motion.div 
+                                        key={i} 
+                                        initial={{ opacity: 0, x: -10 }}
+                                        animate={{ opacity: 1, x: 0 }}
+                                        transition={{ delay: 0.5 + i * 0.05 }}
+                                        className="flex items-center gap-4 group"
+                                    >
+                                        <div className="w-2 h-2 rounded-full border transition-all group-hover:scale-125" style={{ borderColor: accentColor, backgroundColor: accentColor + '20' }}></div>
+                                        <span className="font-space text-sm text-gray-300 group-hover:text-white transition-colors">{f}</span>
+                                    </motion.div>
+                                ))}
+                            </div>
+                        </div>
+
+                        <div className="mt-12 flex items-center gap-6">
+                            <button 
+                                onClick={() => { playSound('click'); onClose(); }}
+                                className="px-10 py-5 text-black font-black font-orbitron tracking-[0.2em] text-xs transition-all hover:scale-105 active:scale-95 shadow-[0_0_30px_rgba(0,0,0,0.5)]"
+                                style={{ backgroundColor: accentColor }}
+                            >
+                                ACKNOWLEDGE_UPLINK
+                            </button>
+                            <div className="hidden md:block font-mono text-[8px] text-gray-600 tracking-widest uppercase">
+                                Protocol_ID: {protocolId.toUpperCase()} // REV_9.4
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </motion.div>
+        </motion.div>
+    );
+};
+
 // --- Footer Component ---
-const Footer = ({ onViewChange }) => {
+
+const Footer = ({ onViewChange, onProtocolClick }) => {
     const handleNav = (view) => {
         playSound('click');
         onViewChange(view);
     };
+
     return (
         <footer id="company" className="border-t border-white/10 bg-brand-black relative z-10 pt-16 pb-8 px-6">
             <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-8 mb-12">
@@ -1895,10 +2065,11 @@ const Footer = ({ onViewChange }) => {
                 <div>
                     <h4 className="font-orbitron text-white text-sm tracking-wider mb-4">PROTOCOLS</h4>
                     <ul className="space-y-2 text-sm font-space text-gray-500 flex flex-col items-start">
-                        <li><button onClick={() => handleNav('platform')} onMouseEnter={() => playSound('hover')} className="hover:text-brand-accent transition-colors">Threat Intel</button></li>
-                        <li><button onClick={() => handleNav('platform')} onMouseEnter={() => playSound('hover')} className="hover:text-brand-accent transition-colors">Cloud Security</button></li>
-                        <li><button onClick={() => handleNav('platform')} onMouseEnter={() => playSound('hover')} className="hover:text-brand-accent transition-colors">Endpoint Defense</button></li>
+                        <li><button onClick={() => onProtocolClick('threat-intel')} onMouseEnter={() => playSound('hover')} className="hover:text-brand-accent transition-colors">Threat Intel</button></li>
+                        <li><button onClick={() => onProtocolClick('cloud-security')} onMouseEnter={() => playSound('hover')} className="hover:text-brand-accent transition-colors">Cloud Security</button></li>
+                        <li><button onClick={() => onProtocolClick('endpoint-defense')} onMouseEnter={() => playSound('hover')} className="hover:text-brand-accent transition-colors">Endpoint Defense</button></li>
                     </ul>
+
                 </div>
                 <div>
                     <h4 className="font-orbitron text-white text-sm tracking-wider mb-4">COMPANY</h4>
@@ -1930,6 +2101,8 @@ const App = () => {
     const [toast, setToast] = useState(null);
     const [currentView, setCurrentView] = useState('home');
     const [isInitializing, setIsInitializing] = useState(false);
+    const [selectedProtocol, setSelectedProtocol] = useState(null);
+
 
     if (isBooting) {
         return <BootSequence onComplete={() => setIsBooting(false)} />;
@@ -1974,8 +2147,9 @@ const App = () => {
                             <Intelligence />
                             <Defense onDeployClick={() => setCurrentView('deploy')} />
                         </main>
-                        <Footer onViewChange={setCurrentView} />
+                        <Footer onViewChange={setCurrentView} onProtocolClick={setSelectedProtocol} />
                     </motion.div>
+
                 );
             case 'deploy':
                 return (
@@ -1987,22 +2161,25 @@ const App = () => {
                 return (
                     <motion.div key="platform" variants={viewVariants} initial="initial" animate="animate" exit="exit" transition={transition}>
                         <PlatformPage />
-                        <Footer onViewChange={setCurrentView} />
+                        <Footer onViewChange={setCurrentView} onProtocolClick={setSelectedProtocol} />
                     </motion.div>
+
                 );
             case 'company':
                 return (
                     <motion.div key="company" variants={viewVariants} initial="initial" animate="animate" exit="exit" transition={transition}>
                         <CompanyPage />
-                        <Footer onViewChange={setCurrentView} />
+                        <Footer onViewChange={setCurrentView} onProtocolClick={setSelectedProtocol} />
                     </motion.div>
+
                 );
             case 'contact':
                 return (
                     <motion.div key="contact" variants={viewVariants} initial="initial" animate="animate" exit="exit" transition={transition}>
                         <ContactPage />
-                        <Footer onViewChange={setCurrentView} />
+                        <Footer onViewChange={setCurrentView} onProtocolClick={setSelectedProtocol} />
                     </motion.div>
+
                 );
             case 'command':
                 return (
@@ -2035,7 +2212,17 @@ const App = () => {
             </AnimatePresence>
 
             <AnimatePresence>
+                {selectedProtocol && (
+                    <ProtocolDetail 
+                        protocolId={selectedProtocol} 
+                        onClose={() => setSelectedProtocol(null)} 
+                    />
+                )}
+            </AnimatePresence>
+
+            <AnimatePresence>
                 {toast && (
+
                     <Toast 
                         message={toast.message} 
                         type={toast.type} 
